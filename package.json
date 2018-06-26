@@ -4,6 +4,7 @@
   "description": "",
   "main": "main.js",
   "scripts": {
+    "start": "electron .",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -19,5 +20,8 @@
   "homepage": "https://github.com/anilchaulagain25/cherry-coin#readme",
   "devDependencies": {
     "electron": "2.0.2"
+  },
+  "dependencies": {
+    "level": "^4.0.0"
   }
 }
