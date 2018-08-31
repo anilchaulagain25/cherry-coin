@@ -1,12 +1,31 @@
-// var Block = require("../models/Block.js")
-// var Transaction = require("../models/Transaction.js");
-// var levelup = require("level");
-// var db = levelup("@data/transaction", {valueEncoding : 'json'});
+var Block = require("../models/Block.js")
+var Transaction = require("../models/Transaction.js");
+var levelup = require("level");
+var db = levelup("@data/transaction", {valueEncoding : 'json'});
 
-// module.exports = class TransactionPool{
-//     constructor(){
-//         //constructor
-//     };
+module.exports = class TransactionPool{
+    constructor(){
+        //constructor
+    };
+
+    SaveTransaction(tran){
+        db.open();
+        db.put(tran.timestamp, tran, (err) => {
+			console.log('Save Error : ' + err);
+            db.close();
+        });
+    }
+
+    GetTransactions(){
+        var txns = [];
+        db.createReadStream().on('data', (data)=>{
+            txns.push(data);
+            console.log('key: ', data.key);
+            console.log('value: ', data.value);
+        });
+        return txns;
+    }
+}
 
 //     // AddTransaction(transaction){
         

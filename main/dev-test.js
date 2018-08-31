@@ -1,4 +1,6 @@
 const Block = require("./models/Block");
+const BlockHandler = require("./src/BlockHandler");
+// const BlockHandler = require("@src/BlockHandler");
 
 var txn_data = [{
     timestamp: "20180202" /*|| create new timestamp*/,
@@ -26,4 +28,10 @@ var blk_data = {
 };
 
 var block = new Block(blk_data);
+var blockHdl = new BlockHandler();
 console.log(block);
+blockHdl.createBlock(block);
+// blockHdl.saveBlock();
+var blocks = blockHdl.GetBlocks();
+console.log(blocks);
+

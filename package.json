@@ -8,7 +8,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "wave": "node ./main/app.js",
     "dev-run": "nodemon ./main/app.js",
-    "dev-test": "nodemon dev-test"
+    "dev-test": "nodemon ./main/dev-test"
   },
   "repository": {
     "type": "git",
