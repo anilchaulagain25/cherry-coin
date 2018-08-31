@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>
+        <%= app.title %>
+    </title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- UI DESIGN SECTION (EXTERNAL CSS DEPENDENCIES) -->
+    <link rel="stylesheet" type="text/css" href="/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="/custom.css">
+    <!-- UI DESIGN SECTION (EXTERNAL CSS DEPENDENCIES) -->
+</head>
+
+<body>
+    <div class="container">
+        <div class="py-5">
+            <div class="text-center">
+                <h3>Pending Transactions</h3>
+            </div>
+            <div class="row">
+            <div class="col-md-12">
+                <input type="button" value="Add Transaction" class="btn btn-default float-right">
+            </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <legend>Pending Transactions<i class="material-icons">face</i></legend>
+                    <table class="table table-hover table-responsive table-striped">
+                        <thead>
+                            <th>S.N.</th>
+                            <th>Sender</th>
+                            <th>Receiver</th>
+                            <th>Amount</th>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>1</td>
+                                <td>71ptn8ioau6iujhi97u</td>
+                                <td>71ptn8e1ww6iujs7h73</td>
+                                <td>100</td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td>71ptn8ioau644as3a7u</td>
+                                <td>71ptn8e1ww3f33a3373</td>
+                                <td>61</td>
+                            </tr>
+                            <tr>
+                                <td>3</td>
+                                <td>71ptn8ioau6iujhi97u</td>
+                                <td>71ptnmlo9nniujs7h73</td>
+                                <td>100</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                        <legend>Pending Transactions</legend>
+                        <table class="table table-hover table-responsive table-striped">
+                            <thead>
+                                <th>S.N.</th>
+                                <th>Sender</th>
+                                <th>Receiver</th>
+                                <th>Amount</th>
+                                <th>Action</th>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>1</td>
+                                    <td>71ptn8ioau6iujhi97u</td>
+                                    <td>71ptn8e1ww6iujs7h73</td>
+                                    <td>100</td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>2</td>
+                                    <td>71ptn8ioau644as3a7u</td>
+                                    <td>71ptn8e1ww3f33a3373</td>
+                                    <td>61</td>
+                                </tr>
+                                <tr>
+                                    <td>3</td>
+                                    <td>71ptn8ioau6iujhi97u</td>
+                                    <td>71ptnmlo9nniujs7h73</td>
+                                    <td>100</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+            </div>
+        </div>
+
+        <footer class="my-5 pt-5 text-muted text-center text-small">
+            <p class="mb-1">&copy; 2017-2018 Cherry-Coin Project | Nepal</p>
+            <ul class="list-inline">
+                <li class="list-inline-item"><a href="#">Privacy</a></li>
+                <li class="list-inline-item"><a href="#">Terms</a></li>
+                <li class="list-inline-item"><a href="#">Support</a></li>
+            </ul>
+        </footer>
+    </div>
+    <!-- UI SCRIPTS SECTION (EXTERNAL JAVASCRIPT  DEPENDENCIES) -->
+    <script>window.$ = window.jQuery = require('/jquery/jquery-3.3.1.min.js');</script>
+    <script type="text/javascript" src="/bootstrap/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="/custom.js"></script>
+    <!-- UI SCRIPTS SECTION (EXTERNAL JAVASCRIPT DEPENDENCIES) -->
+</body>
+
+</html>

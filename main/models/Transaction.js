@@ -5,8 +5,8 @@ class Transaction{
 		this.sender		= data.sender ;
 		this.receiver	= data.receiver;
 		this.amount		= data.amount;
-		this.hash       = "";
-		this.signature  = "";
+		this.hash
+		this.signature
 	}
 
 	validateTransaction(){
@@ -33,3 +33,4 @@ class Transaction{
 
 }
 
+module.exports = Transaction;

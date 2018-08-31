@@ -2,7 +2,7 @@ const crypto = require('crypto');
 
 class Block{
 	constructor(data){
-		data = data || {};
+		data = data || [];
 		this.index = data.index;
 		this.parentHash = data.parentHash;
 		this.hash = data.hash;

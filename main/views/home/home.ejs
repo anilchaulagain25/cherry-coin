@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>
+    <%= app.title %>
+  </title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- UI DESIGN SECTION (EXTERNAL CSS DEPENDENCIES) -->
+  <link rel="stylesheet" type="text/css" href="/bootstrap/css/bootstrap.min.css">
+  <link rel="stylesheet" type="text/css" href="/custom.css">
+  <!-- UI DESIGN SECTION (EXTERNAL CSS DEPENDENCIES) -->
+</head>
+
+<body>
+  <div class="container">
+    <div class="py-5 text-center">
+      <img class="d-block mx-auto mb-4" src="/images/cherry-coin.png" alt="" width="72" height="72">
+      <h2>Cherry-Coin</h2>
+      <p class="lead">Cherry-Coin is a project in blockchain technologies to implement cryptocorrency. This project is created
+        by CS Students of Patan Multiple Campus for final year project.</p>
+    </div>
+    <form action="" method="POST" class="form-inline">
+      <div class="row">
+        <div class="col">
+          <input type="text" name="name" class="form-control" placeholder="Input Parameter">
+          <small class="form-text text-muted">Parameter is <span class="text-info"><%= param %></span></small>
+        </div>
+        <div class="col">
+          <button type="submit" value="Submit" name="submit" class="btn btn-primary btn-small">Submit</button>
+        </div>
+      </div>
+    </form>
+    <div class="nav">
+      <ul>
+        <li><a href="/transactions">Transactions</a></li>
+        <li><a href="/transactions/addNew"><input type="button" value="Add Transaction"></a></li>
+      </ul>
+    </div>
+
+    <footer class="my-5 pt-5 text-muted text-center text-small">
+      <p class="mb-1">&copy; 2017-2018 Cherry-Coin Project | Nepal</p>
+      <ul class="list-inline">
+        <li class="list-inline-item"><a href="#">Privacy</a></li>
+        <li class="list-inline-item"><a href="#">Terms</a></li>
+        <li class="list-inline-item"><a href="#">Support</a></li>
+      </ul>
+    </footer>
+  </div>
+
+</body>
+
+</html>
+
+
+<!-- html
+ body
+  h1 HOME
+  a(href="/") INDEX
+  p inputs = #{param}
+  form(action="" method="POST")
+    input(type="text", name="name")
+    button(type="submit" value="Submit") -->
