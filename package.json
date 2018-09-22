@@ -26,16 +26,20 @@
     "nodemon": "^1.17.5"
   },
   "dependencies": {
+    "dotenv": "^6.0.0",
     "ejs": "^2.6.1",
     "express": "^4.16.3",
+    "jquery": "^3.3.1",
+    "knockout": "^3.4.2",
     "level": "^4.0.0",
     "material-design-icons": "^3.0.1",
     "module-alias": "^2.1.0",
-    "pug": "^2.0.3"
+    "public-ip": "^2.4.0",
+    "pug": "^2.0.3",
+    "secp256k1": "^3.5.2"
   },
   "_moduleAliases": {
     "@data": "main/data",
     "@src": "main/src"
   }
 }
-

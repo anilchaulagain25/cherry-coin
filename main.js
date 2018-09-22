@@ -1,61 +1,88 @@
-const {app, BrowserWindow} = require('electron');
+const dotenv = require('dotenv').config();
+const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const url = require('url');
-const express = require('./main/app');
+const net = require('net');
 
-let win
+const SignupHandler = require('./src/SignupHandler');
+const LoginHandler = require('./src/LoginHandler');
+const BlockResponder = require('./src/BlockResponder');
 
-function createWindow () {
-  // Create the browser window.
+const ConnectionBroker = require('./src/conneciton/ConnectionBroker');
+
+if (dotenv.error) {
+  throw dotenv.error
+}else{
+  console.log(`Environment Variables : ${JSON.stringify(dotenv.parsed)}`);
+}
+
+let win;
+
+function createWindow() {
   win = new BrowserWindow({
-  	width: 800,
-  	height: 600,
-  	icon: __dirname + '/ui/images/cherry-coin.png',
-  	title:"Cherry-Coin",
+    width: 1000,
+    height: 700,
+    minHeight: 700,
+    minWidth: 1000,
+    icon: __dirname + '/ui/images/cherry-coin.png',
+    title: "Cherry-Coin",
     autoHideMenuBar: true,
     useContentSize: true,
-    resizable: false,
+    resizable: true,
+    frame: true,
     show: false
   });
 
-  // console.log(express.HTTP_PORT); //xx
+  win.loadURL(url.format({
+    pathname: path.join(__dirname, 'index.html'),
+    protocol: 'file:',
+    slashes: true
+  }));
 
-  // and load the index.html of the app.
-  // win.loadURL(url.format({pathname: path.join(__dirname, 'index.html'), protocol: 'file:', slashes: true}));
-  
-  //for express application
-  win.loadURL("http://localhost:8085/");
-
-  win.once('ready-to-show', () => {
+  win.once('ready-to-show', ()=>{
     win.show();
   });
 
-  // Open the DevTools.
-  //win.webContents.openDevTools()
-
-  // Emitted when the window is closed.
-  win.on('closed', () => {
-    // Dereference the window object, usually you would store windows
-    // in an array if your app supports multi windows, this is the time
-    // when you should delete the corresponding element.
+  win.webContents.openDevTools()
+  win.on('close', () => {
     win = null
   });
+
+  //SIGNUP ACTION
+  ipcMain.on('signup-request', (event, arg) => {
+
+    var obj = JSON.parse(arg);
+    new SignupHandler(obj.username, obj.pwd, event);
+
+  });
+  //LOGIN ACTION
+  ipcMain.on('login-request', (event, arg) => {
+    var obj = JSON.parse(arg);
+    new LoginHandler(obj.username, obj.pwd, event);
+  });
+
+  //BLOCK RENDERER
+  ipcMain.on('generate-block', (event, arg) =>{
+    BlockResponder.GenerateBlock(event, arg);
+  });
+  ipcMain.on('mine-block', (event, arg) =>{
+    BlockResponder.MineBlock(event, arg);
+  });
+
+  
 }
 
-
-app.once('ready', ()=>{
-  express;
-  createWindow();
-});
+app.on('ready', createWindow);
 
 app.on('window-all-closed', () => {
-	if (process.platform !== 'darwin') {
-		app.quit();
-	}
+  if (process.platform !== 'darwin') {
+    app.quit()
+  }
+});
+app.on('activate', () => {
+  if (win === null) {
+    createWindow()
+  }
 });
 
-/*app.on('activate', () => {
-	if (win === null) {
-		createWindow();
-	}
-});*/
+global.APP_NAME = "Cherry-Coin";

@@ -1,0 +1,6 @@
+2018/09/23-05:16:36.526624 b4f69b40 Recovering log #71
+2018/09/23-05:16:36.527138 b4f69b40 Level-0 table #73: started
+2018/09/23-05:16:36.615654 b4f69b40 Level-0 table #73: 232 bytes OK
+2018/09/23-05:16:36.842553 b4f69b40 Delete type=0 #71
+2018/09/23-05:16:36.843933 b4f69b40 Delete type=3 #69
+2018/09/23-05:16:36.907647 b2f65b40 Moved #58 to level-1 217 bytes OK: files[ 3 2 0 0 0 0 0 ]

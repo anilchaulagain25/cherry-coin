@@ -6,6 +6,7 @@
 	<!-- UI DESIGN SECTION (EXTERNAL CSS DEPENDENCIES) -->
 	<link rel="stylesheet" type="text/css" href="./ui/bootstrap/css/bootstrap.min.css">
 	<link rel="stylesheet" type="text/css" href="./ui/custom.css">
+	<link rel="stylesheet" type="text/css" href="./ui/sweetalert/sweetalert.css">
 	<!-- UI DESIGN SECTION (EXTERNAL CSS DEPENDENCIES) -->
 </head>
 <body>
@@ -17,14 +18,16 @@
 		</div>
 		<div class="row">
 			<div class="col-md-6 col-sm-6 mb-6" style="text-align: center;">
-				<button class="btn btn-success btn-lg btn-block"  type="button">Contribute to project</button>
+				<button class="btn btn-success btn-lg btn-block" type="button"
+				onclick="swal('Thank you for your interest !','Thank you for your interest, this is not available currently ! Stay connected with us !','success')"
+				>Contribute to project</button>
 			</div>
 			<div class="col-md-6 col-sm-6 mb-6" style="text-align: center;">
-				<button class="btn btn-primary btn-lg btn-block"  type="button">Let's get started</button>
+				<a class="btn btn-primary btn-lg btn-block"  href="login.html">Let's get started</a>
 			</div>
 		</div>
 		
-
+		
 		<footer class="my-5 pt-5 text-muted text-center text-small">
 			<p class="mb-1">&copy; 2017-2018 Cherry-Coin Project | Nepal</p>
 			<ul class="list-inline">
@@ -38,6 +41,7 @@
 	<script>window.$ = window.jQuery = require('./ui/jquery/jquery-3.3.1.min.js');</script>
 	<script type="text/javascript" src="./ui/bootstrap/js/bootstrap.min.js"></script>
 	<script type="text/javascript" src="./ui/custom.js"></script>
+	<script type="text/javascript" src="./ui/sweetalert/sweetalert.min.js"></script>
 	<!-- UI SCRIPTS SECTION (EXTERNAL JAVASCRIPT DEPENDENCIES) -->
 </body>
 </html>

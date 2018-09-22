@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Login</title>
+	<!-- UI DESIGN SECTION (EXTERNAL CSS DEPENDENCIES) -->
+	<link rel="stylesheet" type="text/css" href="./ui/bootstrap/css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="./ui/custom.css">
+	<link rel="stylesheet" type="text/css" href="./ui/sweetalert/sweetalert.css">
+	<link rel="stylesheet" href="./ui/font-awesome/css/font-awesome.min.css">
+	<!-- UI DESIGN SECTION (EXTERNAL CSS DEPENDENCIES) -->
+	<style type="text/css">
+		.flex {
+			padding-top: 3%;
+			padding-bottom: 3%;
+		}
+	</style>
+</head>
+<!-- This snippet uses Font Awesome 5 Free as a dependency. You can download it at fontawesome.io! -->
+
+<body>
+	<div class="container">
+		<div class="row" style="margin-top: 10%;height: 90%;">
+			<div class="col-md-7 flex" style="background-color: #7FDBFF;">
+			</div>
+			<div class="col-md-5 flex" style="background-color: #f0f0f0;">
+				<h3 id="mode">Login</h3>
+				<div id="login_error_div" style="display: none;">
+				</div>
+				<form id="login_form" action="javascript:login_utility.loginClick()">
+					<div id="divLogin">
+						<div class="form-group">
+							<label for="txtLoginUsername">Username</label>
+							<input type="text" name="Username" class="form-control lowercase" id="txtLoginUsername" placeholder="Enter Username">
+						</div>
+						<div class="form-group">
+							<label for="txtLoginPassword">Password</label>
+							<input type="password" name="Password" class="form-control" id="txtLoginPassword" placeholder="Enter Password">
+						</div>
+						<button type="submit" id="btnLogin" class="btn btn-primary">Login</button>
+						&nbsp;&nbsp;&nbsp;<a id="signupLink" href="javascript:login_utility.showSignUpPanel()">Sign up</a>
+					</div>
+				</form>
+				<form id="signup_form" action="javascript:login_utility.signupClick()">
+					<div id="divSignUp" style="display: none;">
+						<div class="form-group">
+							<label for="txtSignUpUsername">Username</label>
+							<input type="text" name="Username" class="form-control lowercase" id="txtSignUpUsername" placeholder="Enter Username">
+						</div>
+						<div class="form-group">
+							<label for="txtSignUpPassword">Password</label>
+							<input type="password" name="Password" class="form-control" id="txtSignUpPassword" placeholder="Enter Password">
+						</div>
+						<div class="form-group">
+							<label for="txtSignUpRePassword">Re-Password</label>
+							<input type="password" name="RePassword" class="form-control" id="txtSignUpRePassword" placeholder="Re-Enter Password">
+						</div>
+						<button type="submit" id="btnSignup" class="btn btn-primary">Sign Up</button>
+						&nbsp;&nbsp;&nbsp;<a id="loginLink" href="javascript:login_utility.showLoginPanel()">Log In</a>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+	<!-- UI SCRIPTS SECTION (EXTERNAL JAVASCRIPT  DEPENDENCIES) -->
+	<script>
+		window.$ = window.jQuery = require('./ui/jquery/jquery-3.3.1.min.js');
+	</script>
+	<script type="text/javascript" src="./ui/bootstrap/js/bootstrap.min.js"></script>
+	<script type="text/javascript" src="./ui/custom.js"></script>
+	<script type="text/javascript" src="./ui/sweetalert/sweetalert.min.js"></script>
+	<script type="text/javascript" src="./ui/sweetalert/sweetalert.min.js"></script>
+	<script type="text/javascript" src="./ui/jquery/button-loading.js"></script>
+	<script type="text/javascript">
+		//IPC RENDERER PROCESS INVOCATIOIN
+
+
+		var {
+			ipcRenderer,
+			remote
+		} = require('electron');
+		var main = remote.require('./main');
+
+		$(() => {
+			$("#txtLoginUsername").focus()
+		});
+		let MIN_USER_NAME_LEN = 4;
+		let MAX_USER_NAME_LEN = 16;
+		let MIN_PASSWORD_LEN = 4;
+		let MAX_PASSWORD_LEN = 128;
+		let USER_NAME_REGEX = /^[a-zA-Z]+$/;
+		let PASSWORD_REGEX = /^[a-zA-Z0-9]+$/;
+		let USERNAME_REGEX_ERROR_MESSAGE = `Username Can only Contains Letters`;
+		let PASSWORD_REGEX_ERROR_MESSAGE = `Password Must Contains Both Letters and Numbers`;
+
+
+		var login_utility = {
+			//Here type is success,info,danger,warning and other bootstarp valid alert class and message is message you want to display to users
+			showMessage: function (type, message) {
+				type = type || 'info';
+				message = message || 'Message is not defined.';
+				message = message.replace(/ +(?= )/g, '');
+				message = toTitleCase(message);
+				let feedBackHtml = `<div class="alert alert-${type}" role="alert">${message}</div>`;
+				$("#login_error_div").html(feedBackHtml).css({
+					'display': 'block'
+				});
+			},
+			clearMessage: function () {
+				$("#login_error_div").css({
+					'display': 'none'
+				}).html('');
+			},
+			showLoginPanel: function () {
+				$("#mode").html("Login");
+				login_utility.clearMessage();
+				$("#divLogin").css({
+					'display': 'none'
+				});
+				$("#txtLoginPassword").val('');
+				$("#divSignUp").css({
+					'display': 'none'
+				});
+				$("#divLogin").css({
+					'display': 'block'
+				});
+				$("#txtLoginUsername").val('').focus();
+			},
+			showSignUpPanel: function () {
+				$("#mode").html("Sign Up");
+				login_utility.clearMessage();
+				$("#divLogin").css({
+					'display': 'none'
+				});
+				$("#txtSignUpPassword").val('');
+				$("#txtSignUpRePassword").val('');
+				$("#divSignUp").css({
+					'display': 'block'
+				});
+				$("#txtSignUpUsername").val('').focus();
+
+			},
+			loginClick: function () {
+				login_utility.clearMessage();
+				let userName = $("#txtLoginUsername");
+				let password = $("#txtLoginPassword");
+				if (userName.val().trim() === "") {
+					login_utility.showMessage('danger', "Username Can't Be Empty");
+					userName.focus();
+				} else if (password.val().trim() === "") {
+					login_utility.showMessage('danger', "Password Can't Be Empty");
+					password.focus();
+				} else if (userName.val().length < MIN_USER_NAME_LEN || userName.val().length > MAX_USER_NAME_LEN) {
+					login_utility.showMessage('danger', `Username Length Must Between ${MIN_USER_NAME_LEN} and ${MAX_USER_NAME_LEN}`);
+					userName.focus();
+				} else if (password.val().length < MIN_PASSWORD_LEN || password.val().length > MAX_PASSWORD_LEN) {
+					login_utility.showMessage('danger', `Username Length Must Between ${MIN_PASSWORD_LEN} and ${MAX_PASSWORD_LEN}`);
+					password.focus();
+				} else if (!userName.val().match(USER_NAME_REGEX)) {
+					login_utility.showMessage('danger', USERNAME_REGEX_ERROR_MESSAGE);
+					userName.focus();
+				} else if (!password.val().match(PASSWORD_REGEX)) {
+					login_utility.showMessage('danger', PASSWORD_REGEX_ERROR_MESSAGE);
+					password.focus();
+				} else {
+					const loginBtn = $("#btnLogin");
+					const signupLink = $("#signupLink");
+					loginBtn
+						.prop('disabled', true)
+						.html('Loading...');
+					signupLink
+						.css('visibility', 'hidden');
+
+					ipcRenderer.send('login-request', JSON.stringify({
+						username: userName.val().trim(),
+						pwd: password.val().trim()
+					}));
+					ipcRenderer.on('login-response', (event, response) => {
+						var login_response_data = JSON.parse(response);
+						if (login_response_data.success) {
+							login_utility.showMessage('success', 'You are successfully logged in');
+							window.location.href='transactions.html';
+						} else {
+							login_utility.showMessage('danger', login_response_data.msg);
+						}
+						loginBtn
+							.prop('disabled', false)
+							.html('Login');
+						signupLink
+							.css('visibility', 'visible');
+					});
+				}
+
+			},
+			signupClick: function () {
+				login_utility.clearMessage();
+				let userName = $("#txtSignUpUsername");
+				let pwd = $("#txtSignUpPassword");
+				let rePwd = $("#txtSignUpRePassword");
+				if (userName.val().trim() === "") {
+					login_utility.showMessage('danger', "Username Can't Be Empty");
+					userName.focus();
+				} else if (pwd.val().trim() === "") {
+					login_utility.showMessage('danger', "Password Can't Be Empty");
+					pwd.focus();
+				} else if (rePwd.val().trim() === "") {
+					login_utility.showMessage('danger', "Enter Your Password Again");
+					rePwd.focus();
+				} else if (pwd.val() !== rePwd.val()) {
+					login_utility.showMessage('danger', "Password Mismatch, Please Enter Again");
+					rePwd.focus();
+				} else if (userName.val().length < MIN_USER_NAME_LEN || userName.val().length > MAX_USER_NAME_LEN) {
+					login_utility.showMessage('danger', `Username Length Must Between ${MIN_USER_NAME_LEN} and ${MAX_USER_NAME_LEN}`);
+					userName.focus();
+				} else if (pwd.val().length < MIN_PASSWORD_LEN || pwd.val().length > MAX_PASSWORD_LEN) {
+					login_utility.showMessage('danger', `Username Length Must Between ${MIN_PASSWORD_LEN} and ${MAX_PASSWORD_LEN}`);
+					pwd.focus();
+				} else if (!userName.val().match(USER_NAME_REGEX)) {
+					login_utility.showMessage('danger', USERNAME_REGEX_ERROR_MESSAGE);
+					userName.focus();
+				} else if (!pwd.val().match(PASSWORD_REGEX)) {
+					login_utility.showMessage('danger', PASSWORD_REGEX_ERROR_MESSAGE);
+					pwd.focus();
+				} else {
+					const signupBtn = $("#btnSignup");
+					const loginLink = $("#loginLink");
+
+					signupBtn
+						.prop('disabled', true)
+						.html('Loading...');
+
+					loginLink
+						.css('visibility', 'hidden');
+					ipcRenderer.send('signup-request', JSON.stringify({
+						username: userName.val().trim(),
+						pwd: pwd.val().trim()
+					}));
+
+					ipcRenderer.on('signup-response', (event, args) => {
+						var signup_response_data = JSON.parse(args);
+						if (signup_response_data.success) {
+							login_utility.showLoginPanel();
+							login_utility.showMessage('success', signup_response_data.msg);
+						} else {
+							login_utility.showMessage('danger', signup_response_data.msg);
+						}
+						signupBtn
+							.prop('disabled', false)
+							.html('Signup');
+
+						loginLink
+							.css('visibility', 'visible');
+					});
+				}
+			}
+		};
+
+		//RESET ERROR MESSAGE ON KEY PRESS EVENT AND SHOW CAPS LOCK IN CASE OF PASSWORD INPUT
+		$("input")
+			.on("keypress", (e) => {
+				const id = $(e.target).attr("id");
+				if (id === "txtSignUpPassword" || id === "txtLoginPassword" || id === "txtSignUpRePassword") {
+					var kc = e.keyCode ? e.keyCode : e.which;
+					var sk = e.shiftKey ? e.shiftKey : kc === 16;
+					if (((kc >= 65 && kc <= 90) && !sk) || ((kc >= 97 && kc <= 122) && sk))
+						login_utility.showMessage('warning', 'Caps Lock Is On');
+					else
+						login_utility.clearMessage();
+
+				} else
+					login_utility.clearMessage();
+
+			})
+			.on("copy cut paste", (e) => {
+				e.preventDefault();
+			});
+
+		//LIBRARY FUNCTION TO CONVERT STRING TO TITLE CASE
+		var toTitleCase = (str) => {
+			str = str.toLowerCase().split(' ');
+			for (var i = 0; i < str.length; i++) {
+				str[i] = str[i].charAt(0).toUpperCase() + str[i].slice(1);
+			}
+			return str.join(' ');
+		};
+	</script>
+	<!-- UI SCRIPTS SECTION (EXTERNAL JAVASCRIPT DEPENDENCIES) -->
+</body>
+
+</html>

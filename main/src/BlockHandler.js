@@ -2,7 +2,7 @@ var Block = require("../models/Block.js")
 // var levelup = require("level");
 var levelup = require('levelup');
 var leveldown = require('leveldown');
-var db = levelup(leveldown('./data/chain/'), {'valueEncoding': 'json'})
+var db = levelup(leveldown('./data/block/'), {'valueEncoding': 'json'})
 // var db = levelup("../data/block", {valueEncoding : 'json'});
 
 
@@ -36,6 +36,14 @@ module.exports = class BlockHandler {
 		});
 	}
 
+	GenerateHash(){
+		//Generate Hash and Add it to the block data.
+	}
+
+	GetLeafBlock(){
+		//Get Last Block Here
+	}
+
 	GetBlocks(){
         var txns = [];
         db.createReadStream().on('data', (data)=>{
@@ -45,7 +53,19 @@ module.exports = class BlockHandler {
             console.log('value: ', JSON.stringify(data.value));
         });
         return txns;
-    }
+	}
+
+	get Block() {
+		return this.block;
+	}
+	
+	SetCoinBaseTransaction(){
+		//Insert a new transaction into the block for reward.
+	}
+
+	ValidateBlock(){
+		//Get Transction Validator Here
+	}
 }
 
 /* TEMP

@@ -1,26 +1,31 @@
 const Transaction = require('../models/Transaction');
-const TransactionPool = require("@src/TransactionPool")
+// const TransactionPool = require("@src/TransactionPool");
+const TransactionHandler = require("@src/TransactionHandler");
 
 module.exports.controller = function (app) {
-    app.get("/transactions", (req,res)=>{
-        res.render("transaction/index");
+    txnHlr = new TransactionHandler();
+
+    app.get("/Transaction", (req,res)=>{
+        var transactions = txnHlr.GetTransactions();
+        console.log(transactions);
+        res.render("Transaction/index", {transactions});
     });
 
-    app.get("/transactions/addNew", (req,res)=>{
-        res.render("transaction/manage");
+    app.get("/Transaction/manage", (req,res)=>{
+        
+        txnHlr.GetTransaction('1');
+        
+        res.render("Transaction/manage");
     });
-
-    app.post("/transactions/addNew", (req,res)=>{
+    
+    app.post("/Transaction/manage", (req,res)=>{
         var input = req.body;
         var tran = new Transaction(input);
         tran.timestamp = Date.now();
         console.log(req.body);
         console.log(tran);
+        // txnHlr.SaveTransaction();
 
-        txn = new TransactionPool();
-        txn.SaveTransaction(tran);
-        txn.GetTransactions();
-
-        res.render("transaction/index");
+        res.render("Transaction/index");
     });
 }
