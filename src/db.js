@@ -1,5 +1,5 @@
 var level = require('level');
-var logger = require('./../logger');
+var logger = require('@root/logger');
 module.exports = dbUsers = level('./data/users', {
     valueEncoding: 'json'
 }, (err) => logger.logException(err));

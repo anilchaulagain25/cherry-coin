@@ -1,38 +1,60 @@
-const Block = require("../models/Block.js").default
-const BlockHandler = require("@src/BlockHandler.js")
-const TransactionHandler = require("@src/TransactionHandler.js")
-const UTXOHandler = require("@src/UTXOHandler.js")
+const logger = require('@root/logger.js');
+
+
+// const Block = require("@models/Block.js").default
+// const BlockHandler = require("@src/BlockHandler.js")
+// const TransactionHandler = require("@src/TransactionHandler.js")
+// const UTXOHandler = require("@src/UTXOHandler.js")
 
 const level = require("level");
 const db = level("@data/chain", {valueEncoding : "json"}, (err) => {
-    if(err) console.log(err);
+    if(err) {
+        logger.log("error", err, "Error while opening chain db");
+    }
 });
 
 
-module.exports = class BlockHandler {
+class ChainHandler {
 
 	constructor(){
-		//get current block from data/block here
+		this.db = level("@data/chain", {valueEncoding : "json"}, (err) => {
+            if(err) {
+                logger.log("error", err, "Error while opening chain db");
+            }
+        });
     };
+
+
+    PublishToChain(block){
+        this.db.put(block.hash, block, (err) => {
+            if(err){
+                logger.log("error", err, "Chain ! Error Inserting Data to Chaindb");
+            }
+        });
+    }
+
+    // PublishToNetwork(block){
+        
+    // }
     
     CreateGenesisBlock(block){
         db.put(block.timestamp, block, function (err) {
-			console.log('Save Error : ' + err);
-		});
+           console.log('Save Error : ' + err);
+       });
     }
 
     ReadBlockChain(block){
         db.createValueStream().on('data', (data)=>{
-			console.log(JSON.stringify(data));
-        }).on("close", (data)=>{
+           console.log(JSON.stringify(data));
+       }).on("close", (data)=>{
             //close function
         });
-    }
+   }
 
-    CheckBlockExistance(blockHash){
-        db.createValueStream().on('data', (data)=>{
-			return data.hash === blockHash;
-        }).on("close", (data)=>{
+   CheckBlockExistance(blockHash){
+    db.createValueStream().on('data', (data)=>{
+       return data.hash === blockHash;
+   }).on("close", (data)=>{
             //close function
         }).on("error", (data)=>{
             console.log("Error Occured ", data);
@@ -50,3 +72,6 @@ module.exports = class BlockHandler {
         });
     }
 }
+
+
+module.exports = ChainHandler;

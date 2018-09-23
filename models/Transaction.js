@@ -4,7 +4,7 @@ const TransactionModel = function(data){
 	this.sender = data.sender || '';
 	this.receiver = data.receiver || '';
 	this.amount = data.amount || '';
-	this.fee = data.fee || '';
+	this.fee = data.fee || '0';
 	this.hash = data.hash || '';
 	this.signature = this.signature || '';
 }
@@ -15,7 +15,7 @@ const TransactionHashModel = function(data){
 	this.sender = data.sender || '';
 	this.receiver = data.receiver || '';
 	this.amount = data.amount || '';
-	this.fee = data.fee || '';
+	this.fee = data.fee || '0';
 }
 
 

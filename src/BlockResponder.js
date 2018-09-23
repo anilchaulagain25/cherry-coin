@@ -1,4 +1,4 @@
-const BlockHandler = require("./BlockHandler");
+const BlockHandler = require("@src/BlockHandler");
 
 var GenerateBlock = (event, arg) =>{
 	var blkHlr = new BlockHandler();

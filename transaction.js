@@ -2,7 +2,7 @@ const {remote} = require('electron');
 const app = remote.app;
 const $ = require('jquery');
 const userTxnHlr = require('./src/UserTransactionHandler');
-const TransactionHandler = require('./src/TransactionHandler');
+const TransactionHandler = require('@src/TransactionHandler');
 const ko = require('knockout');
 
 
@@ -50,7 +50,7 @@ var LoadTxnTable = () => {
 						<td>${item.value.sender}</td>
 						<td>${item.value.receiver}</td>
 						<td>${item.value.amount}</td>
-						<td>${item.value.timestamp}</td>
+						<td>${item.value.fee}</td>
 						<td>
 							<span class="badge badge-pill badge-success">Valid</span>
 							<span class="badge badge-pill badge-info">Approved</span>

@@ -1,3 +1,4 @@
+const logger = require('@root/logger.js');
 const level = require("level");
 
 

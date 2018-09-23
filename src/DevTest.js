@@ -1,4 +1,4 @@
-const crypt = require('./Common/Crypt')
+// const crypt = require('@common/Crypt')
 const level = require("level");
 const crypto = require("crypto");
 const logger = require("./../logger");
@@ -6,14 +6,14 @@ const logger = require("./../logger");
 const fs = require('fs');
 const ecdh = crypto.createECDH("secp256k1");
 
-const db = level("././data/wallet/UTXOPool", {valueEncoding : "json"}, (err) => {
+const db = level("./data/wallet/UTXOPool", {valueEncoding : "json"}, (err) => {
 	if(err) console.log(err);
 });
 
 var peerdb;
 
 var registerdb = ()=>{
-	peerdb = level("././data/peers", {valueEncoding: "json"}, (err)=>{
+	peerdb = level("./data/peers", {valueEncoding: "json"}, (err)=>{
 		if (err) {
 			logger.log("error", err, "Error connecting peers database");
 			console.log(err);
@@ -24,11 +24,18 @@ var registerdb = ()=>{
 }
 registerdb();
 
-peerdb.put(Date.now(), {"ip": "127.0.0.1", "port": 8000}, err => console.log(err));
+// peerdb.put(Date.now(), {"ip": "127.0.0.1", "port": 8000}, err => console.log(err));
 
-peerdb.createValueStream().on('data', (peer) =>{
-	console.log(peer);
+peerdb.get(1, (err,data)=>{
+	console.log(err.type);
+	console.log("============================");
+	console.log(data);
 })
+
+
+// peerdb.createValueStream().on('data', (peer) =>{
+// 	console.log(peer);
+// })
 
 /*//UTXO
 var GenerateUtxoData = ()=>{

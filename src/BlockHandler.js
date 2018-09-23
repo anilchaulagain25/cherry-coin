@@ -1,46 +1,55 @@
-var logger = require('./../logger.js');
-var level = require('level');
-var crypt = require('./Common/Crypt');
-const Block = require("./../models/Block")
-const {TransactionModel, TransactionHashModel} = require('./../models/Transaction');
+const logger = require('@root/logger.js');
+const level = require('level');
+const Crypt = require('@common/Crypt');
 
-var TransactionHandler = require('./TransactionHandler');
-// const TransactionHandler = require("@src/TransactionHandler.js")
+const dbGlobal = require('@common/Global');
+const User = require('@common/User');
+
+const BlockModel = require("@models/Block")
+const {TransactionModel, TransactionHashModel} = require('@models/Transaction');
+const {Response} = require('@models/Common');
+
+const ConnectionBroker = require('@connection/ConnectionBroker'); 
+const ChainHandler = require('@src/ChainHandler');
+const TransactionHandler = require('@src/TransactionHandler');
+const ChainUtxoHandler = require('@src/ChainUtxoHandler');
 // const UTXOHandler = require("@src/UTXOHandler.js")
 
 
-var index = {
-	idb : level('./data/global/', (err) =>{
-		if (err) {logger.log("error", err, false)}
-	}),
-	setValue : function (key, value) {
-		index.idb.put(key, value, (err)=>{
-			if (err) {
-				logger.log("error", err, false, "blockHandler", "leveldb : global");
-			}
-		});
-	},
-	getValue : function (key) {
-		return new Promise((resolve, request) => {
-			index.idb.get(key, (err, data) =>{
-				if (err) {
-					logger.log("error", err,supress = false, "blockHandler", "leveldb : global")
-					reject(0);
-				}
-				else resolve(data);
-			});
-		})
-	}
-}
+// var index = {
+// 	idb : level('./data/global/', (err) =>{
+// 		if (err) {logger.log("error", err, false)}
+// 	}),
+// 	setValue : function (key, value) {
+// 		index.idb.put(key, value, (err)=>{
+// 			if (err) {
+// 				logger.log("error", err, false, "blockHandler", "leveldb : global");
+// 			}
+// 		});
+// 	},
+// 	getValue : function (key) {
+// 		return new Promise((resolve, request) => {
+// 			index.idb.get(key, (err, data) =>{
+// 				if (err) {
+// 					logger.log("error", err,supress = false, "blockHandler", "leveldb : global")
+// 					reject(0);
+// 				}
+// 				else resolve(data);
+// 			});
+// 		})
+// 	}
+// }
 
 
 class BlockHandler {
 
 	constructor(blk){
 		this.block = new Block(blk);
+		this.mypubkey = ""; //todo xx
 		this.db = level('./data/block/', {'valueEncoding': 'json'}, (err) =>{
 			if (err) {logger.log("error", err, false)}
 		});
+		this.blockBodyHash = "";
 
 	};
 
@@ -48,79 +57,222 @@ class BlockHandler {
 	// 	return this.block;
 	// }
 
+	//Create the very first block 
 	GenerateGenesisBlock(){
-		//Not Implemented
+		return new Promise((resolve, reject)=>{
+			new TransactionHandler()
+			.GetCoinbaseTxn(this.mypubkey)
+			.then((coinbaseTxn)=>{
+				this.block.coinbase = coinbaseTxn;
+				this.block.index = 0;
+				this.block.previousHash = '';
+				this.block.data = [];
+				resolve(this.block);
+			}).catch((error)=>{
+				logger.log("error", error, "Error while generating Genesis Block");
+				reject(error);
+			})
+
+		});	
 	}
 
+	//New Block Generator
 	GenerateNewBlock(){
-		console.log("CB TRAN"); //xx
-		// index.setValue("lastHash", 0);
-		// index.setValue("blockHeight", 0);
-		// index.setValue("coinbaseReward", 11);
-		
-		return Promise.all(
-			[
-			index.getValue("lastHash"), 
-			index.getValue("blockHeight"), 
-			this.GetVerifiedTransactions(),
-			index.getValue("coinbaseReward")
-			])
-		.then((data) =>{
-			this.block.previousHash = data[0];
-			this.block.index = ++data[1];
-			this.block.transactions = data[2];
-			this.block.coinbase = new TransactionModel({sender: "", receiver: crypt.pubKey, amount : data[3]});
-			this.SaveBlock();
-			return this.block;
-		})
-		.catch((err) => {
-			console.log(err);
-			logger.log("error", err);
+		var response = new Response();
+		dbGlobal.getBlockIndex().then((blockIndex)=>{
+			if (blockIndex === 0) {
+				return GenerateGenesisBlock().then((data, error)=>{
+					if (error) {
+						response.msg = error;
+					}else{
+						this.SaveBlock();
+						response.success = true;
+						response.data = data;
+					}
+					return response;
+				})
+			}else{
+				return Promise.all(
+					[
+					dbGlobal.getLatestBlockHash(),
+					this.GetVerifiedTransactions(),
+					new TransactionHandler().GetCoinbaseTxn(this.mypubkey)
+					])
+				.then((data, error) =>{
+					if (error) {
+						response.msg = error;
+					}else{
+						this.block.index = ++blockIndex;
+						this.block.previousHash = data[0];
+						this.block.transactions = data[1];
+						this.block.coinbase = data[2];
+						this.SaveBlock();
+						response.success = true;
+						response.data = this.block;
+					}
+					return response;
+					
+				})
+				.catch((err) => {
+					logger.log("error", err, "Error while generating new block");
+					response.msg = err;
+					return response;
+				});
+			}
 		});
 	}
 
+	//Get List of All Verified Transactions to be inserted into new Block 
 	GetVerifiedTransactions(){
 		//Add Transactions
-		return new TransactionHandler().GetTransactions();
+		return new TransactionHandler().GetTxnsForBlock();
 	}
 
+	//Get Merkle Hash of The Added Transactions
 	GenerateMerkleRoot(){
-		for (const iterator of this.block.transactions) {
-			
+		let crypt = new Crypt();
+		let hashes = [];
+		for (const txn of this.block.transactions) {
+			let thash = crypt.GenerateHash(JSON.stringify(new TransactionHashModel(txn)));
+			hashes.push(thash);
 		}
+		let merkle = crypt.GenerateHash(hashes.toString());
+
+		return merkle;
 	}
 
-/* 	GetCoinBaseTransaction(){
-		//Insert a new transaction into the block for reward.
-		index.getValue("coinbaseReward").then((rewardAmt) =>{
-			return new TransactionModel({sender: "", receiver: crypt.pubKey, amount : rewardAmt});	
-		})
+	//Generate Hash of the Block using Merkle Root, Coinbase Hash and Previous Hash
+	GenerateBlockDataHash(){
+		var merkle = this.GenerateMerkleRoot();
+		var coinbaseHash = this.block.coinbase.hash;
+		var previousHash = this.block.previousHash;
 
-		// var coinbaseAmount = index.getValue("coinbaseReward") || 10;
-		// this.block.coinbase = new TransactionModel({sender: "", receiver: crypt.pubKey, amount : coinbaseAmount})
-	} */
+		var blockHash = new Crypt().GenerateHash([merkle,coinbaseHash,previousHash].toString());
+		this.blockBodyHash = blockHash;
+		return blockHash; 
+	}
+
+	//Generate Block Signature
+	GenerateBlockSignature(){
+		new User().getPrivateKey().then((privateKey)=>{
+			var blockHash = this.GenerateBlockDataHash();
+			var signature = new Crypt().GenerateSignature(blockHash, privateKey);
+			this.block.signature = signature;
+			return signature;
+		}).catch((error)=>{
+			logger.log("error", error, "Error while getting User Private Key");
+		})
+	}
+
+
+	//Mine Block Hash
+	MineBlock(){
+		new dbGlobal().getBlockDifficulty().then((data)=>{
+			var crypt = new Crypt();
+			var minedHash = "";
+			var hashInitials = "0".repeat(data);
+			while(!minedHash.startsWith(hashInitials)){
+				this.block.nonce++;
+				minedHash = crypt.GenerateHash([this.blockBodyHash, this.block.nonce].toString());
+				console.log(`Nonce:  ${this.block.nonce}`);
+			}
+			this.block.hash = minedHash;
+		});
+	}
+
+	//ADD MINED BLOCK TO OWN CHAIN AND BROADCAST TO PEERS
+	PublishBlock(){
+		this.AcceptBlock();		
+		new ConnectionBroker().broadcastData("B", "AddBlock", this.block);
+		new UTXOHandler().UpdateChainUtxo();
+	}
+
+	AcceptBlock(){
+		new ChainHandler().PublishToChain(this.block);
+		new TransactionHandler().DeletePublishedTxns(this.block.transactions);
+	}
+
+
+
+	//Validate and Manage Input Block
+	ProcessInputBlock(block){
+		this.block = block;
+		var response = new Response();
+		Promise.all([
+			dbGlobal.getBlockIndex(),
+			dbGlobal.getLatestBlockHash(),
+			dbGlobal.getCoinbaseAmount(),
+			dbGlobal.getBlockDifficulty()
+			]).then((data,error)=>{
+				if (error) {
+					logger.log("error", error, "Error while validating Block");
+				}else{
+					if(block.index !== ++data[0]){
+						response.msg = "Warning ! - Block Index Mismatch...!!!";
+						return response;
+					}else if (data[1] !== block.previousHash) {
+						response.msg = "Warning ! - Invalid Parent Hash...!!!";
+						return response;
+					}else if(data[2] !== block.coinbase.amount){
+						response.msg = "Warning ! - Invalid Coinbase Amount...!!!";
+						return response;
+					}else if(!this.VerifyBlockHash()){
+						response.msg = "Warning ! - Invalid Hash...!!!";
+						return response;
+					}
+					var utxo = new ChainUtxoHandler();
+					utxo.AssignUtxo(true,true);
+					utxo.ReplicateUtxoPool().then(()=>{
+						for (let txn of this.block.transactions){
+							utxo.CheckUtxo(txn.sender, txn.amount).then((data, error)=>{
+								if (error) {
+									response.msg = `Warning ! - ${error}...!!!`;
+									return response;
+								}
+							})
+						}
+					})
+				}
+			}).then((data)=>{
+				if (data.success) {
+					this.AcceptBlock();
+				}
+			}).catch((error)=>{
+				response.msg = `Warning ! - ${error}...!!!`;
+				return response;
+			});
+		/*dbGlobal.getCurrentIndex().then((index)=>{
+			if(block.index !== ++index){
+				response.msg = "Warning ! - Block Index Mismatch...!!!";
+			}else if (true) {}
+		})*/
+
+	}
+
+
+	VerifyBlockHash(){
+		let dataHash = this.GenerateBlockDataHash();
+		let nonce = this.block.nonce;
+		let hash = new Crypt().GenerateHash([dataHash,nonce].toString());
+		return hash === this.block.hash;
+	}
+
 
 	SaveBlock(){
 		if(this.db.isClosed()) this.db.open();
 		this.db.put(this.block.index, this.block, (err)=> {
 			if (err) {
-				logger.log("error", err, false, "Error Occured while saving block.")
+				logger.log("error", err, "Error Occured while saving block.")
 			}
 			this.db.close();
 		});
 	};
 
-	ValidateBlock(){
+	ValidateBlock(block){
+		var block = new BlockModel(block);
 		//Get Transction Validator Here
 	}
 
-	GenerateHash(){
-		//Generate Hash and Add it to the block data.
-	}
-
-	GenerateSignature(){
-
-	}
 
 	ClearMinedBlock(){
 		if(this.db.isClosed()) this.db.open();
@@ -137,17 +289,26 @@ class BlockHandler {
 		});
 	}
 
-	
-
-	
-	
-	
-
-	
 }
 
 
 module.exports = BlockHandler;
+
+
+
+/* 	GetCoinBaseTransaction(){
+		//Insert a new transaction into the block for reward.
+		index.getValue("coinbaseReward").then((rewardAmt) =>{
+			return new TransactionModel({sender: "", receiver: crypt.pubKey, amount : rewardAmt});	
+		})
+
+		// var coinbaseAmount = index.getValue("coinbaseReward") || 10;
+		// this.block.coinbase = new TransactionModel({sender: "", receiver: crypt.pubKey, amount : coinbaseAmount})
+	} */
+
+
+
+
 
 // var blkHlr = new BlockHandler();
 

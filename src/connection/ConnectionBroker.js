@@ -1,33 +1,12 @@
-const dotenv = require('dotenv').config(); //XX: FOR TEST ONLY
 var logger = require('./../../logger.js');
 const net = require('net');
 const http = require('http');
 const level = require("level");
 const publicIp = require('public-ip');
 const os = require('os');
+const TransactionHandler = require('./../TransactionHandler');
 
-// const db = level("././data/peers", {valueEncoding: "json"}, (err)=>{
-// 	if (err) logger.log("error", err, "Error connecting peers database");
-// });
-// const {connectiondb} = require('./../db');
-
-
-const PacketModel = function(data){
-	data = data || {};
-	this.method = data.method || ""; //req:request, res:response
-	this.action = data.action || "";
-	this.packetType = data.packetType || ""; //T : transaction, B: block, I: Initial
-	this.data = data.data || "";
-
-}
-
-const NodeModel = function (data) {
-	data = data || {};
-	this.ip = data.ip || "";
-	this.port = data.port || "";
-	this.type = data.type || "U"; //U: User, M: Miner
-}
-
+const {PacketModel, NodeModel} = require("./../../models/Network");
 
 const PORT_NUMBER = process.env.PORT_NUMBER || 8000;
 const USE_LOCAL_ADDRESS = process.env.USE_LOCAL_ADDRESS || false;
@@ -37,26 +16,28 @@ class ConnectionBroker{
 	constructor(){
 		this.peers = [];
 		this.connectedPeers = [];
-		// this.myAddress = USE_LOCAL_ADDRESS ? this.getMyPrivateAddress() : this.getMyPublicAddress();
 		this.myAddress = IP_ADDRESS;
+		this.db = level("././data/peers", {valueEncoding: "json"}, (err)=>{
+			if (err) logger.log("error", err, "Error connecting peers database");
+		});
+
+		// this.myAddress = USE_LOCAL_ADDRESS ? this.getMyPrivateAddress() : this.getMyPublicAddress();
 		// if (USE_LOCAL_ADDRESS) {
 		// 	this.getMyPrivateAddress();
 		// }else{
 		// 	this.getMyPublicAddress();
 		// }
-		this.db = level("././data/peers", {valueEncoding: "json"}, (err)=>{
-			if (err) logger.log("error", err, "Error connecting peers database");
-		});
 	}
 
 	listen(){
-		console.log(this.myAddress, ':', PORT_NUMBER);
+		console.log('Listening on ' ,this.myAddress, ':', PORT_NUMBER);
 		const server = net.createServer((socket) =>{
 			console.log(`Connected From: ${socket.remoteAddress} : ${socket.remotePort}`);  //xx
 			console.log(`Me : ${socket.localAddress} : ${socket.localPort}`); //xx
-			// socket.on('data', this.responseHandler);
+			socket.write(this.broadcastMyIp());
+			this.registerNode();
 			socket.on('data',(data)=>{
-				console.log("DATA GOT");
+				console.log("NETWORK DATA :");
 				console.log(data.toString('utf8'));
 				this.responseHandler(JSON.parse(data.toString('utf8')));
 			});
@@ -77,6 +58,8 @@ class ConnectionBroker{
 
 		publicIp.v4().then(ip => {
 			this.myAddress = ip;
+		}).catch((err)=>{
+			logger.log("error", err, "Error while getting public ip address");
 		});
 	}
 
@@ -119,8 +102,16 @@ class ConnectionBroker{
 			}
 			break;
 			case "T":
+			if (data.action = "AddTransaction") {
+				console.log("Network Add Transaction");
+				this.ProcessTransaction(data.data);
+			}
 			break;
 			case "B":
+			if (data.action = "AddBlock") {
+				console.log("Network Add Block");
+				this.ProcessBlock(data.data);
+			}
 			break;
 			default:
 			logger.log("info", JSON.stringify(data), "Invalid Response");
@@ -128,31 +119,49 @@ class ConnectionBroker{
 		}
 	}
 
-	broadcastData(data){
+	broadcastData(type, action, data){
+		var packet = new PacketModel();
+		packet.packetType = type;
+		packet.action = action;
+		packet.data = data;
+
 		this.db.createValueStream().on('data', (peer) =>{
 			let socket = new net.Socket();
 			try{
+				socket.setEncoding('utf8');
+				socket.on('data', (data)=>{
+					console.log("NETWORK SOCKET DATA :");
+					console.log(data.toString('utf8'));
+					this.responseHandler(JSON.parse(data.toString('utf8')));
+				});
 				socket.connect(peer.port, peer.ip, ()=>{
 					socket.write(data);
+
 				}).on('error', (err) =>{
-					logger.log("warning", err, "Error while boradcasting data to peers", peer);
+					logger.log("warning", err, "Error while broadcasting data to peers", peer);
 				});
 			}catch(ex){
 				logger.log("warning", ex, "Error while connecting to peers for broadcasting", peer);
 			}
 		}).on('end', ()=>{
 			db.close();
-		}).on('error', ()=>{
+		}).on('error', (err)=>{
+			logger.log("warning", err, "Error while streaming peers for broadcasting", peer);
 			db.close();
 		})
 	}
 
-	registerMyIp(){
-		var ip = this.getMyPublicAddress();
+	// send 
+	broadcastMyIp(){
+		//var ip = this.getMyPublicAddress();
 
 		var address = ip + ':' + PC_PORT;
+		var node = new NodeModel({'ip': this.myAddress, 'port' : PORT_NUMBER});
+		var packet = new PacketModel({'packetType': "P", 'action' : "RegisterNode", 'data': node});
+		return packet;
 	}
 
+	// Register peers to local peers list
 	registerNode(data){
 		console.log("Registering Node");
 		var data = new NodeModel(data);
@@ -162,9 +171,24 @@ class ConnectionBroker{
 				else logger.log("success", JSON.stringify(data), "Successfully registered node");
 				db.close();
 			});
-
 		}
 	}
+
+	ProcessTransaction(data){
+		var response = new TransactionHandler().ProcessPeerTxn(data); 
+		console.log(JSON.stringify(response));
+		return response;
+	}
+
+	ProcessBlock(data){
+		console.log("Process Incoming Block");
+	}
+
+
+
+
+
+
 
 	// connectToPeers(){
 	// 	var peers = this.getAllPeers();

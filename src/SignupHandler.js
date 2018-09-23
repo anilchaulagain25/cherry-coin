@@ -1,6 +1,6 @@
 var crypto = require('crypto');
-var Signup = require('./../models/Signup');
-var db = require('./db');
+var Signup = require('@models/Signup');
+var db = require('@src/db');
 
 // var level = require('level');
 // var logger = require('./../logger');

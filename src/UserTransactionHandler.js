@@ -1,6 +1,6 @@
 const level = require("level");
-const crypt = require('./Common/Crypt');
-const TransactionHandler = require('./TransactionHandler');
+const crypt = require('@common/Crypt');
+const TransactionHandler = require('@src/TransactionHandler');
 // const {TransactionModel, TransactionHashModel} = require('././models/Transaction');
 // const TransactionModel = require('././models/Transaction.js');
 
@@ -8,7 +8,7 @@ const PRIVATE_KEY = "xx"; //replace
 const FEE = 0.0;
 
 
-const db = level("././data/wallet/TransactionPool", {valueEncoding : "json"}, (err) => {
+const db = level(__dirname + "././data/wallet/TransactionPool", {valueEncoding : "json"}, (err) => {
     if(err) console.log(err);
 });
 
@@ -111,7 +111,8 @@ class UserTransactionHandler{
 
     ApproveTransaction(txn){
         console.log("approve")
-        if (crypt.ValidateSignature(txn)) {
+        var htx = new TransactionHashModel(txn);
+        if (crypt.ValidateSignature(htx, txn.sender, txn.signature)) {
             console.log('Verified : ', true);
             //TODO XX: PUBLISH transaction
             var response = new TransactionHandler().AddTransaction(txn);

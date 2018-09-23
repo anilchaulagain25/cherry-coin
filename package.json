@@ -36,10 +36,16 @@
     "module-alias": "^2.1.0",
     "public-ip": "^2.4.0",
     "pug": "^2.0.3",
+    "rimraf": "^2.6.2",
     "secp256k1": "^3.5.2"
   },
   "_moduleAliases": {
-    "@data": "main/data",
-    "@src": "main/src"
+    "@data": "./data",
+    "@src": "./src",
+    "@common": "./src/common",
+    "@connection": "./src/connection",
+    "@models": "./models",
+    "@tests": "./tests",
+    "@root": "./"
   }
 }

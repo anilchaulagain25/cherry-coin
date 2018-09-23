@@ -1,3 +1,4 @@
+require('module-alias/register');
 const dotenv = require('dotenv').config();
 const { app, BrowserWindow, ipcMain, remote } = require('electron');
 const path = require('path');

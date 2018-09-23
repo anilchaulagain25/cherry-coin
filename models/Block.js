@@ -5,7 +5,7 @@ const Block = function(data){
 	this.transactions = data.transactions || '';
 	this.coinbase = data.coinbase || '';
 	this.hash = data.hash || '';
-	this.nonce = data.nonce || '';
+	this.nonce = data.nonce || 0;
 	this.signature = data.signature || '';
 }
 

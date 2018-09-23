@@ -1,6 +1,6 @@
 var crypto = require('crypto');
-var dbUsers = require('./db');
-const ConnectionBroker = require('./connection/ConnectionBroker');
+var dbUsers = require('@src/db');
+const ConnectionBroker = require('@connection/ConnectionBroker');
 
 // var level = require('level');
 // var logger = require('./../logger');
