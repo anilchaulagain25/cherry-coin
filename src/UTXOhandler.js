@@ -1,10 +1,6 @@
 const level = require("level");
 
 
-const db = level("././data/wallet/UTXOPool", {valueEncoding : "json"}, (err) => {
-    if(err) console.log(err);
-});
-
 const Response = function () {
     this.success = false;
     this.data;
@@ -15,7 +11,9 @@ const Response = function () {
 class UTXOHandler{
 
     constructor(){
-
+        this.db = level("././data/wallet/UTXOPool", {valueEncoding : "json"}, (err) => {
+            if(err) console.log(err);
+        });
     }
 
     UpdateUTXO(Transaction){
@@ -25,17 +23,19 @@ class UTXOHandler{
             //if yes - modify the coins present 
             //else  create a new field 
 
-    }
+        }
 
-    SaveData(key, amount){
-        db.put(key, amount, (err)=>{
-            if (err) console.log("error is ", err);
-        });
-        console.log("Success");
-    }
+        SaveData(key, amount){
+        if(this.db.isClosed()) this.db.open();
+            this.db.put(key, amount, (err)=>{
+                if (err) console.log("error is ", err);
+                this.db.close();
+            });
+            console.log("Success");
+        }
 
     // GetUTXO(key){
-    //         db.get(key, (err, data) =>{
+    //         this.db.get(key, (err, data) =>{
     //             console.log(data);
     //     // debugger;   
 
@@ -51,9 +51,11 @@ class UTXOHandler{
 
     GetUTXO(key){
         return new Promise((resolve, reject)=>{
-            db.get(key, (err, data) =>{
+        if(this.db.isClosed()) this.db.open();
+            this.db.get(key, (err, data) =>{
                 if(err) reject(err);
                 else resolve(data);
+                this.db.close();
             });
         })
     }
@@ -61,10 +63,16 @@ class UTXOHandler{
     GetUTXOList(){
         var utxo = [];
         return new Promise((resolve, reject) =>{
-            db.createReadStream().on("data", (data) => {
+        if(this.db.isClosed()) this.db.open();
+            this.db.createReadStream().on("data", (data) => {
                 utxo.push(data);
-            }).on("error", (err)=>{ reject(err); 
-            }).on("end", (data) => { resolve(utxo);
+            }).on("error", (err)=>{ {
+                reject(err);
+                this.db.close();
+            }; 
+            }).on("end", (data) => { 
+                resolve(utxo);
+                this.db.close();
             });
         }).catch((err) => {
             console.error(err)
@@ -90,7 +98,7 @@ class UTXOHandler{
 
 }
 
-module.exports = new UTXOHandler();
+module.exports = UTXOHandler;
 
 // var utxo = new UTXOHandler();
 // var key = "BM09qzxp0DimjPyvb1OldbOB+qtNwaIgdEx9PJZhWjLg2oXL9SLgjNJ/vF/PrAtQWY2rWAN6UL15kaBS6DWHR78=";

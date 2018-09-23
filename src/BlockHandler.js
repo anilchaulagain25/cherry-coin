@@ -1,22 +1,13 @@
 var logger = require('./../logger.js');
 var level = require('level');
 var crypt = require('./Common/Crypt');
-var txnHlr = require('./TransactionHandler');
-
 const Block = require("./../models/Block")
 const {TransactionModel, TransactionHashModel} = require('./../models/Transaction');
 
-
+var TransactionHandler = require('./TransactionHandler');
 // const TransactionHandler = require("@src/TransactionHandler.js")
 // const UTXOHandler = require("@src/UTXOHandler.js")
 
-var db = level('./data/block/', {'valueEncoding': 'json'}, (err) =>{
-	if (err) {logger.log("error", err, false)}
-});
-//TODO: XX remove this
-// var idb = level('./data/global/', (err) =>{
-// 	if (err) {logger.log("error", err, false)}
-// });
 
 var index = {
 	idb : level('./data/global/', (err) =>{
@@ -47,7 +38,10 @@ class BlockHandler {
 
 	constructor(blk){
 		this.block = new Block(blk);
-		//get current block from data/block here
+		this.db = level('./data/block/', {'valueEncoding': 'json'}, (err) =>{
+			if (err) {logger.log("error", err, false)}
+		});
+
 	};
 
 	// get Block() {
@@ -87,7 +81,7 @@ class BlockHandler {
 
 	GetVerifiedTransactions(){
 		//Add Transactions
-		return txnHlr.GetTransactions();
+		return new TransactionHandler().GetTransactions();
 	}
 
 	GenerateMerkleRoot(){
@@ -107,8 +101,12 @@ class BlockHandler {
 	} */
 
 	SaveBlock(){
-		db.put(this.block.index, this.block, (err)=> {
-			if (err) {logger.log("error", err, false, "Error Occured while saving block.")}
+		if(this.db.isClosed()) this.db.open();
+		this.db.put(this.block.index, this.block, (err)=> {
+			if (err) {
+				logger.log("error", err, false, "Error Occured while saving block.")
+			}
+			this.db.close();
 		});
 	};
 
@@ -125,13 +123,17 @@ class BlockHandler {
 	}
 
 	ClearMinedBlock(){
-		var keystream = db.createKeyStream();
+		if(this.db.isClosed()) this.db.open();
+		var keystream = this.db.createKeyStream();
 		keystream.on('data', function(key){
-			db.del(key, function (err) {
+			this.db.del(key, function (err) {
 				console.log('Delete Error : ' + err);
 			})
 		}).on("error", (err) => {
 			logger.log("error", err, false, "BlockHandler", "ClearMinedBlock");
+			this.db.close();
+		}).on('end', ()=>{
+			this.db.close();
 		});
 	}
 
@@ -145,15 +147,16 @@ class BlockHandler {
 }
 
 
-module.exports = new BlockHandler();
+module.exports = BlockHandler;
 
-var blkHlr = new BlockHandler();
+// var blkHlr = new BlockHandler();
 
-	blkHlr.GenerateNewBlock().then('data', (data)=>{
-		console.log(data);
-	}).catch((err)=>{
-		console.log(err);
-	});
+// 	blkHlr.GenerateNewBlock().then('data', (data)=>{
+// 		console.log(data);
+// 	}).catch((err)=>{
+// 		console.log(err);
+// 	});
+
 
 /* TEMP
 hdlBlock = new BlockHandler();

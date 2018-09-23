@@ -1,14 +1,16 @@
 const dotenv = require('dotenv').config();
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, remote } = require('electron');
 const path = require('path');
 const url = require('url');
 const net = require('net');
 
+global.APP_NAME = "Cherry-Coin";
+
 const SignupHandler = require('./src/SignupHandler');
-const LoginHandler = require('./src/LoginHandler');
+const {LoginHandler} = require('./src/LoginHandler');
 const BlockResponder = require('./src/BlockResponder');
 
-const ConnectionBroker = require('./src/conneciton/ConnectionBroker');
+
 
 if (dotenv.error) {
   throw dotenv.error
@@ -34,6 +36,7 @@ function createWindow() {
   });
 
   win.loadURL(url.format({
+    // pathname: path.join(__dirname, 'block.html'),
     pathname: path.join(__dirname, 'index.html'),
     protocol: 'file:',
     slashes: true
@@ -61,7 +64,7 @@ function createWindow() {
     new LoginHandler(obj.username, obj.pwd, event);
   });
 
-  //BLOCK RENDERER
+  // BLOCK RENDERER
   ipcMain.on('generate-block', (event, arg) =>{
     BlockResponder.GenerateBlock(event, arg);
   });
@@ -85,4 +88,3 @@ app.on('activate', () => {
   }
 });
 
-global.APP_NAME = "Cherry-Coin";

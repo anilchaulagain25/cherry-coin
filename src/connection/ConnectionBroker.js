@@ -1,4 +1,4 @@
-const dotenv = require('dotenv').config();
+const dotenv = require('dotenv').config(); //XX: FOR TEST ONLY
 var logger = require('./../../logger.js');
 const net = require('net');
 const http = require('http');
@@ -6,9 +6,10 @@ const level = require("level");
 const publicIp = require('public-ip');
 const os = require('os');
 
-const db = level("././data/peers", {valueEncoding: "json"}, (err)=>{
-	if (err) logger.log("error", err, "Error connecting peers database");
-});
+// const db = level("././data/peers", {valueEncoding: "json"}, (err)=>{
+// 	if (err) logger.log("error", err, "Error connecting peers database");
+// });
+// const {connectiondb} = require('./../db');
 
 
 const PacketModel = function(data){
@@ -32,7 +33,7 @@ const PORT_NUMBER = process.env.PORT_NUMBER || 8000;
 const USE_LOCAL_ADDRESS = process.env.USE_LOCAL_ADDRESS || false;
 const IP_ADDRESS = process.env.STATIC_IP_ADDRESS || this.getMyPrivateAddress();
 
-class Connection{
+class ConnectionBroker{
 	constructor(){
 		this.peers = [];
 		this.connectedPeers = [];
@@ -43,6 +44,9 @@ class Connection{
 		// }else{
 		// 	this.getMyPublicAddress();
 		// }
+		this.db = level("././data/peers", {valueEncoding: "json"}, (err)=>{
+			if (err) logger.log("error", err, "Error connecting peers database");
+		});
 	}
 
 	listen(){
@@ -125,15 +129,21 @@ class Connection{
 	}
 
 	broadcastData(data){
-		db.createValueStream().on('data', (peer) =>{
+		this.db.createValueStream().on('data', (peer) =>{
 			let socket = new net.Socket();
 			try{
 				socket.connect(peer.port, peer.ip, ()=>{
 					socket.write(data);
+				}).on('error', (err) =>{
+					logger.log("warning", err, "Error while boradcasting data to peers", peer);
 				});
 			}catch(ex){
-				logger.log("warning", ex, "Error while boradcasting data", peer);
+				logger.log("warning", ex, "Error while connecting to peers for broadcasting", peer);
 			}
+		}).on('end', ()=>{
+			db.close();
+		}).on('error', ()=>{
+			db.close();
 		})
 	}
 
@@ -147,10 +157,12 @@ class Connection{
 		console.log("Registering Node");
 		var data = new NodeModel(data);
 		if (data.ip != "" && data.port != "") {
-			db.put(Date.now(), data, (err) =>{
+			this.db.put(Date.now(), data, (err) =>{
 				if (err) logger.log("error", err, "Error while registering Node");
 				else logger.log("success", JSON.stringify(data), "Successfully registered node");
+				db.close();
 			});
+
 		}
 	}
 
@@ -178,10 +190,13 @@ class Connection{
 }
 
 
-var cb = new Connection();
-cb.listen();
+// var cb = new Connection();
+// cb.listen();
 // var data = new PacketModel();
 // data.packetType = "P";
 // data.action = "RegisterNode"
 // data.data = {"ip":"192.168.1.108", "port": 8005};
 // cb.broadcastData(data);
+
+module.exports = ConnectionBroker;
+// module.exports = new ConnectionBroker();

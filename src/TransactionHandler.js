@@ -2,14 +2,19 @@ const level = require("level");
 const crypt = require('./Common/Crypt');
 const utxo = require('./UTXOhandler');
 const {TransactionModel, TransactionHashModel} = require('./../models/Transaction');
+const remote = require('electron').remote;
+// var connection = remote.getGlobal('APP_NAME');
+const ConnectionBroker = require('./connection/ConnectionBroker'); 
+// const {ConnectionBroker} = require('./LoginHandler');
+
 
 const PRIVATE_KEY = "xx"; //replace
 const FEE = 0.0;
 
 
-const db = level("././data/transactions", {valueEncoding : "json"}, (err) => {
-    if(err) console.log(err);
-});
+// const db = level("././data/transactions", {valueEncoding : "json"}, (err) => {
+//     if(err) console.log(err);
+// });
 
 
 const Response = function () {
@@ -22,7 +27,9 @@ const Response = function () {
 class TransactionHandler{
 
     constructor(){
-
+        this.db = level("././data/transactions", {valueEncoding : "json"}, (err) => {
+            if(err) console.log(err);
+        });
     }
 
 
@@ -57,10 +64,16 @@ class TransactionHandler{
         var validationResponse = this.ValidateTransaction(txn);
         console.log(validationResponse);
         if (validationResponse.success) {
-            db.put(txn.timestamp, txn, (err)=>{
-                if (err) response.msg = "Error while adding txn to verified list.";
+            if(this.db.isClosed()) this.db.open();
+            this.db.put(txn.timestamp, txn, (err)=>{
+                if (err) {
+                    response.msg = "Error while adding txn to verified list.";
+                }else  {
+                    this.BroadcastTransaction(txn);
+                    response.success = true;
+                }
+                 this.db.close();
             });
-            response.success = true;
         }else{
             response.msg =  validationResponse.msg ||  "The transaction is corrupted or invalid";
         }
@@ -68,31 +81,48 @@ class TransactionHandler{
         return response;
     }
 
+    BroadcastTransaction(txn){
+        let connection = new ConnectionBroker();
+        connection.broadcastData(txn);
+    }
+
     GetTransaction(key){
         return new Promise((resolve, reject) =>{
-            db.get(key, (err, data) =>{
+            if(this.db.isClosed()) this.db.open();
+            this.db.get(key, (err, data) =>{
                 if(err) reject(err);
                 else resolve(data);
+                this.db.close();
             });
         })
     }
 
     GetTransactions(){
         var txns = [];
-        var stream = db.createReadStream();
 
+            if(this.db.isClosed()) this.db.open();
         return new Promise((resolve,reject) => {
+            var stream = this.db.createReadStream();
             stream.on('data', (data)=>{
                 txns.push(data);
             })
-            .on('error', ()=> reject)
-            .on('end', ()=> resolve(txns));
+            .on('error', (error)=> {
+                this.db.close();
+                reject(error);
+            })
+            .on('end', ()=> {
+                this.db.close();
+                resolve(txns);
+            });
         });
     }
 
     DeleteTransaction(key){
+        if(this.db.isClosed()) this.db.open();
         db.del(key, (err)=> {
-            if(err) console.log(err)
+            if(err) console.log(err);
+            this.db.close();
+
         });
     }
 
@@ -116,4 +146,5 @@ class TransactionHandler{
 
 }
 
-module.exports = new TransactionHandler();
+// module.exports = new TransactionHandler();
+module.exports = TransactionHandler;

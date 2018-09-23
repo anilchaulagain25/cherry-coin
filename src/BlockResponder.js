@@ -1,7 +1,9 @@
 const BlockHandler = require("./BlockHandler");
 
 var GenerateBlock = (event, arg) =>{
-	BlockHandler.GenerateNewBlock().then((data)=>{
+	var blkHlr = new BlockHandler();
+	console.log("Block Responder");
+	blkHlr.GenerateNewBlock().then((data)=>{
 		event.sender.send('generated-block', JSON.stringify(data));
 	}).catch((err)=>{
 		console.log(err);

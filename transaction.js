@@ -2,7 +2,7 @@ const {remote} = require('electron');
 const app = remote.app;
 const $ = require('jquery');
 const userTxnHlr = require('./src/UserTransactionHandler');
-const txnHlr = require('./src/TransactionHandler');
+const TransactionHandler = require('./src/TransactionHandler');
 const ko = require('knockout');
 
 
@@ -43,6 +43,7 @@ $('#btnSend').on('click', ()=> {
 
 var LoadTxnTable = () => {
 	$('#tblPendingTxns').html('');
+	let txnHlr = new TransactionHandler();
 	txnHlr.GetTransactions().then((data)=>{
 		for(let item of data){
 			$('#tblPendingTxns').append(`<tr>

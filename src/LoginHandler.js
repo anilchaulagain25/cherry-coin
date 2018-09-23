@@ -1,5 +1,6 @@
 var crypto = require('crypto');
 var dbUsers = require('./db');
+const ConnectionBroker = require('./connection/ConnectionBroker');
 
 // var level = require('level');
 // var logger = require('./../logger');
@@ -46,10 +47,12 @@ class LoginHandler {
                         data: data
                     }
                 }));
+                let connection = new ConnectionBroker();
+                connection.listen();
                 return;
             }
         });
 
     }
 }
-module.exports = LoginHandler;
+module.exports = {LoginHandler};

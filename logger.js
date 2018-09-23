@@ -15,14 +15,15 @@ var logException=(error)=>{
     });
 };
 
-var log = (severity, error_msg, supress, ...args) => {
+var log = (severity, system_msg, user_msg, supress, ...args) => {
     if (!severity) {return;}
     if(!supress){
         //msg to user
     }
 	let msg=`${lineBreaker+lineBreaker}
     ************${new Date().toLocaleString()} :: ${severity}  *************${lineBreaker}
-    ${error_msg||'NO ANY ERROR MESSAGE TO LOG'}
+    ${system_msg||'NO ANY ERROR MESSAGE TO LOG'}
+    ${user_msg||'NO ANY ERROR MESSAGE TO LOG'}
     	* ${args.toString()}${lineBreaker}
     *******************************************************`;
     fs.appendFile(ERROR_LOGGER_FILE, msg, function (err) {

@@ -1,6 +1,6 @@
 const level = require("level");
 const crypt = require('./Common/Crypt');
-const txnHlr = require('./TransactionHandler');
+const TransactionHandler = require('./TransactionHandler');
 // const {TransactionModel, TransactionHashModel} = require('././models/Transaction');
 // const TransactionModel = require('././models/Transaction.js');
 
@@ -114,7 +114,7 @@ class UserTransactionHandler{
         if (crypt.ValidateSignature(txn)) {
             console.log('Verified : ', true);
             //TODO XX: PUBLISH transaction
-            var response = txnHlr.AddTransaction(txn);
+            var response = new TransactionHandler().AddTransaction(txn);
             if (response.success) {
                 this.DeleteTransaction(txn.timestamp);
             }else{
