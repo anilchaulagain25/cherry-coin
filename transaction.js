@@ -1,8 +1,9 @@
+require('module-alias/register');
 const {remote} = require('electron');
 const app = remote.app;
 const $ = require('jquery');
 const userTxnHlr = require('./src/UserTransactionHandler');
-const TransactionHandler = require('@src/TransactionHandler');
+const TransactionHandler = require('./src/TransactionHandler');
 const ko = require('knockout');
 
 
@@ -101,7 +102,6 @@ var editTxn = (key) =>{
 
 var deleteTxn = (key) =>{
 	userTxnHlr.DeleteTransaction(key);
-	LoadUserTxnTable();
 	refreshTables();
 };
 
@@ -112,10 +112,13 @@ var approveTxn = (key) =>{
 		var txn = new txnModel(data);
 		if(userTxnHlr.ValidateTransaction(txn)){
 			console.log("verified")
-			txn = userTxnHlr.GenerateTransactionSet(txn);
-			console.log('descending for publish')
-			console.log(txn)
-			publishTxn(txn);
+			userTxnHlr.GenerateTransactionSet(txn).then((data)=>{
+				publishTxn(data);
+			});
+			// txn = userTxnHlr.GenerateTransactionSet(txn);
+			// console.log('descending for publish')
+			// console.log(txn)
+			// publishTxn(txn);
 		}else{ console.log(false)}
 	});
 };

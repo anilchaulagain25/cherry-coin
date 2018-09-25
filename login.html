@@ -6,15 +6,15 @@
 	<!-- UI DESIGN SECTION (EXTERNAL CSS DEPENDENCIES) -->
 	<link rel="stylesheet" type="text/css" href="./ui/bootstrap/css/bootstrap.min.css">
 	<link rel="stylesheet" type="text/css" href="./ui/custom.css">
-	<link rel="stylesheet" type="text/css" href="./ui/sweetalert/sweetalert.css">
+	<!-- <link rel="stylesheet" type="text/css" href="./ui/sweetalert/sweetalert.css"> -->
 	<link rel="stylesheet" href="./ui/font-awesome/css/font-awesome.min.css">
 	<!-- UI DESIGN SECTION (EXTERNAL CSS DEPENDENCIES) -->
 	<style type="text/css">
-		.flex {
-			padding-top: 3%;
-			padding-bottom: 3%;
-		}
-	</style>
+	.flex {
+		padding-top: 3%;
+		padding-bottom: 3%;
+	}
+</style>
 </head>
 <!-- This snippet uses Font Awesome 5 Free as a dependency. You can download it at fontawesome.io! -->
 
@@ -55,6 +55,11 @@
 							<label for="txtSignUpRePassword">Re-Password</label>
 							<input type="password" name="RePassword" class="form-control" id="txtSignUpRePassword" placeholder="Re-Enter Password">
 						</div>
+						<div class="form-group">
+							<label for="txtInputKey"><input type="checkbox" name="chkExistingAccount" id="chkExistingAccount"> Already Have an Sikka Account ??</label>
+							<textarea name="InputKey" class="form-control" id="txtInputKey" placeholder="Place your private key here"></textarea>
+							
+						</div>
 						<button type="submit" id="btnSignup" class="btn btn-primary">Sign Up</button>
 						&nbsp;&nbsp;&nbsp;<a id="loginLink" href="javascript:login_utility.showLoginPanel()">Log In</a>
 					</div>
@@ -68,8 +73,10 @@
 	</script>
 	<script type="text/javascript" src="./ui/bootstrap/js/bootstrap.min.js"></script>
 	<script type="text/javascript" src="./ui/custom.js"></script>
-	<script type="text/javascript" src="./ui/sweetalert/sweetalert.min.js"></script>
-	<script type="text/javascript" src="./ui/sweetalert/sweetalert.min.js"></script>
+	<!-- <script type="text/javascript" src="./ui/sweetalert/sweetalert.min.js"></script> -->
+	<script type="text/javascript" src="./ui/sweetalert2/sweetalert2.all.min.js"></script>
+	
+
 	<script type="text/javascript" src="./ui/jquery/button-loading.js"></script>
 	<script type="text/javascript">
 		//IPC RENDERER PROCESS INVOCATIOIN
@@ -82,7 +89,15 @@
 		var main = remote.require('./main');
 
 		$(() => {
-			$("#txtLoginUsername").focus()
+			$("#txtLoginUsername").focus();
+			$("#txtInputKey").css({'display': 'none'});
+			$("#chkExistingAccount").on("click", ()=>{
+				if ($("#chkExistingAccount").is(':checked')) {
+					$("#txtInputKey").css({'display': 'block'});
+				}else{
+					$("#txtInputKey").css({'display': 'none'});
+				}
+			})
 		});
 		let MIN_USER_NAME_LEN = 4;
 		let MAX_USER_NAME_LEN = 16;
@@ -166,10 +181,10 @@
 					const loginBtn = $("#btnLogin");
 					const signupLink = $("#signupLink");
 					loginBtn
-						.prop('disabled', true)
-						.html('Loading...');
+					.prop('disabled', true)
+					.html('Loading...');
 					signupLink
-						.css('visibility', 'hidden');
+					.css('visibility', 'hidden');
 
 					ipcRenderer.send('login-request', JSON.stringify({
 						username: userName.val().trim(),
@@ -184,10 +199,10 @@
 							login_utility.showMessage('danger', login_response_data.msg);
 						}
 						loginBtn
-							.prop('disabled', false)
-							.html('Login');
+						.prop('disabled', false)
+						.html('Login');
 						signupLink
-							.css('visibility', 'visible');
+						.css('visibility', 'visible');
 					});
 				}
 
@@ -226,30 +241,47 @@
 					const loginLink = $("#loginLink");
 
 					signupBtn
-						.prop('disabled', true)
-						.html('Loading...');
+					.prop('disabled', true)
+					.html('Loading...');
 
 					loginLink
-						.css('visibility', 'hidden');
+					.css('visibility', 'hidden');
+
+					let inputkey = $("#chkExistingAccount").is(':checked') ? $("#txtInputKey").val() : "";
 					ipcRenderer.send('signup-request', JSON.stringify({
 						username: userName.val().trim(),
-						pwd: pwd.val().trim()
+						pwd: pwd.val().trim(),
+						inputkey: inputkey.trim()
 					}));
 
 					ipcRenderer.on('signup-response', (event, args) => {
 						var signup_response_data = JSON.parse(args);
 						if (signup_response_data.success) {
+							// swal("Please save this key in secure place", signup_response_data.data.privateKey);
+							swal({ title: 'Success',
+								html:
+								`<span class="bg-warning">Hello</span>`,
+								focusConfirm: false
+							})
+							swal({
+								title: "Success",
+								text: `Your sikka account is successfully created. Please copy and save this key securely for future use. : 
+								${signup_response_data.data.privateKey}`,
+								icon: "success",
+								closeOnEsc: false,
+								closeOnClickOutside: false
+							});
 							login_utility.showLoginPanel();
 							login_utility.showMessage('success', signup_response_data.msg);
 						} else {
 							login_utility.showMessage('danger', signup_response_data.msg);
 						}
 						signupBtn
-							.prop('disabled', false)
-							.html('Signup');
+						.prop('disabled', false)
+						.html('Signup');
 
 						loginLink
-							.css('visibility', 'visible');
+						.css('visibility', 'visible');
 					});
 				}
 			}
@@ -257,23 +289,23 @@
 
 		//RESET ERROR MESSAGE ON KEY PRESS EVENT AND SHOW CAPS LOCK IN CASE OF PASSWORD INPUT
 		$("input")
-			.on("keypress", (e) => {
-				const id = $(e.target).attr("id");
-				if (id === "txtSignUpPassword" || id === "txtLoginPassword" || id === "txtSignUpRePassword") {
-					var kc = e.keyCode ? e.keyCode : e.which;
-					var sk = e.shiftKey ? e.shiftKey : kc === 16;
-					if (((kc >= 65 && kc <= 90) && !sk) || ((kc >= 97 && kc <= 122) && sk))
-						login_utility.showMessage('warning', 'Caps Lock Is On');
-					else
-						login_utility.clearMessage();
-
-				} else
+		.on("keypress", (e) => {
+			const id = $(e.target).attr("id");
+			if (id === "txtSignUpPassword" || id === "txtLoginPassword" || id === "txtSignUpRePassword") {
+				var kc = e.keyCode ? e.keyCode : e.which;
+				var sk = e.shiftKey ? e.shiftKey : kc === 16;
+				if (((kc >= 65 && kc <= 90) && !sk) || ((kc >= 97 && kc <= 122) && sk))
+					login_utility.showMessage('warning', 'Caps Lock Is On');
+				else
 					login_utility.clearMessage();
 
-			})
-			.on("copy cut paste", (e) => {
-				e.preventDefault();
-			});
+			} else
+			login_utility.clearMessage();
+
+		})
+		.on("copy cut paste", (e) => {
+			e.preventDefault();
+		});
 
 		//LIBRARY FUNCTION TO CONVERT STRING TO TITLE CASE
 		var toTitleCase = (str) => {

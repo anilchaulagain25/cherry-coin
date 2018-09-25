@@ -1,36 +1,22 @@
+require('module-alias/register');
+const path = require('path');
 const level = require("level");
-const crypt = require('@common/Crypt');
+const Crypt = require('@common/Crypt');
+const User = require('@common/User');
+const Global = require('@common/Global');
+
 const TransactionHandler = require('@src/TransactionHandler');
-// const {TransactionModel, TransactionHashModel} = require('././models/Transaction');
+const {TransactionModel, TransactionHashModel} = require('@models/Transaction');
 // const TransactionModel = require('././models/Transaction.js');
 
 const PRIVATE_KEY = "xx"; //replace
 const FEE = 0.0;
 
 
-const db = level(__dirname + "././data/wallet/TransactionPool", {valueEncoding : "json"}, (err) => {
+const db = level(path.resolve("././data/wallet/TransactionPool"), {valueEncoding : "json"}, (err) => {
     if(err) console.log(err);
 });
 
-const TransactionModel = function(data){
-    data = data || {};
-    this.timestamp = data.timestamp || '';
-    this.sender = data.sender || '';
-    this.receiver = data.receiver || '';
-    this.amount = data.amount || '';
-    this.fee = data.fee || '';
-    this.hash = data.hash || '';
-    this.signature = this.signature || '';
-}
-
-const TransactionHashModel = function(data){
-    data = data || {};
-    this.timestamp = data.timestamp || '';
-    this.sender = data.sender || '';
-    this.receiver = data.receiver || '';
-    this.amount = data.amount || '';
-    this.fee = data.fee || '';
-}
 
 
 class UserTransactionHandler{
@@ -97,25 +83,37 @@ class UserTransactionHandler{
     }
 
     GenerateTransactionSet(txn){
-        txn.sender = crypt.pubKey;
-        txn.fee = FEE;
-        let txnHashData = new TransactionHashModel(txn);
-        console.log("Initial Hash Data");
-        console.log(txnHashData);
-        txn.hash = crypt.GenerateHash(JSON.stringify(txnHashData));
-        txn.signature = crypt.GenerateSignature(txn.hash);
-        return txn;
-    }
+        let crypt = new Crypt();
+        let gbl = new Global();
+        let user = new User();
+        return Promise.all([
+            gbl.getTransactionFee(),
+            user.getPublicKey(),
+            user.getPrivateKey()
+            ]).then((data)=>{
+                let txn = new TransactionModel(txn);
+                txn.fee = data[0];
+                txn.sender = data[1];
+                txn.hash = crypt.GenerateHash(JSON.stringify(new TransactionHashModel(txn)));
+                txn.signature = crypt.GenerateSignature(txn.hash, data[2]);
+            })
+            new User().getPrivateKey().then((data)=>{
+                txn.signature = crypt.GenerateSignature(txn.hash, data);
+                return txn;
+            });
+        }
 
 
 
-    ApproveTransaction(txn){
-        console.log("approve")
-        var htx = new TransactionHashModel(txn);
-        if (crypt.ValidateSignature(htx, txn.sender, txn.signature)) {
-            console.log('Verified : ', true);
+        ApproveTransaction(txn){
+            let crypt = new Crypt();
+
+            var htx = new TransactionHashModel(txn);
+            if (crypt.ValidateSignature(htx, txn.sender, txn.signature)) {
+                console.log('Verified : ', true);
             //TODO XX: PUBLISH transaction
             var response = new TransactionHandler().AddTransaction(txn);
+            console.log('Save Response : ',  JSON.stringify(response));
             if (response.success) {
                 this.DeleteTransaction(txn.timestamp);
             }else{
@@ -125,18 +123,6 @@ class UserTransactionHandler{
         }
         //Generate Transction Hash, Signature using Sender Private Key
         //Add User Transaction to Pending Transaction List
-    }
-
-    PublishTransaction(){
-        //Send transactions to all peers
-    }
-
-    GenerateSignature(){
-
-    }
-
-    CheckSignature(){
-
     }
 
 }

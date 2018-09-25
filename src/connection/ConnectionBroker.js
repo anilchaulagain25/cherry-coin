@@ -10,7 +10,7 @@ const {PacketModel, NodeModel} = require("./../../models/Network");
 
 const PORT_NUMBER = process.env.PORT_NUMBER || 8000;
 const USE_LOCAL_ADDRESS = process.env.USE_LOCAL_ADDRESS || false;
-const IP_ADDRESS = process.env.STATIC_IP_ADDRESS || this.getMyPrivateAddress();
+const IP_ADDRESS = process.env.STATIC_IP_ADDRESS;
 
 class ConnectionBroker{
 	constructor(){
@@ -30,7 +30,9 @@ class ConnectionBroker{
 	}
 
 	listen(){
-		console.log('Listening on ' ,this.myAddress, ':', PORT_NUMBER);
+		this.getMyPrivateAddress().then((data)=>{
+			this.address = data;
+			console.log('Listening on ' ,this.myAddress, ':', PORT_NUMBER);
 		const server = net.createServer((socket) =>{
 			console.log(`Connected From: ${socket.remoteAddress} : ${socket.remotePort}`);  //xx
 			console.log(`Me : ${socket.localAddress} : ${socket.localPort}`); //xx
@@ -42,7 +44,9 @@ class ConnectionBroker{
 				this.responseHandler(JSON.parse(data.toString('utf8')));
 			});
 		})
-		server.listen(PORT_NUMBER, this.myAddress).on('error', (err) =>{ if(err) logger.log("error", err, "Error while creating server")});
+		server.listen(PORT_NUMBER, this.myAddress).on('error', (err) =>{ if(err) logger.log("error", err, "Error while creating server")});	
+		})
+		
 	}
 
 
@@ -55,22 +59,26 @@ class ConnectionBroker{
 		// 		console.log(data);
 		// 	});
 		// });
-
-		publicIp.v4().then(ip => {
-			this.myAddress = ip;
-		}).catch((err)=>{
-			logger.log("error", err, "Error while getting public ip address");
-		});
+		return new Promise((resolve, reject)=>{
+			publicIp.v4().then(ip => {
+				this.myAddress = ip;
+				resolve(ip);
+			}).catch((err)=>{
+				logger.log("error", err, "Error while getting public ip address");
+				reject(err);
+			});
+		})
 	}
 
 	getMyPrivateAddress(){
 		var ifaces = require('os').networkInterfaces();
 
-		Object.keys(ifaces).forEach(function (ifname) {
-			var alias = 0;
+		return new Promise((resolve, reject) =>{
+			Object.keys(ifaces).forEach(function (ifname) {
+				var alias = 0;
 
-			ifaces[ifname].forEach(function (iface) {
-				if ('IPv4' !== iface.family || iface.internal !== false) {
+				ifaces[ifname].forEach(function (iface) {
+					if ('IPv4' !== iface.family || iface.internal !== false) {
       				// skip over internal (i.e. 127.0.0.1) and non-ipv4 addresses
       				return;
       			}
@@ -80,15 +88,18 @@ class ConnectionBroker{
 	  				    // console.log(ifname + ':' + alias, iface.address);
 	  				    // return iface.address;
 	  				    this.myAddress = iface.address;
+	  				    resolve(iface.address);
 	  				} else {
 	  				    // this interface has only one ipv4 adress
 	  				    // console.log(ifname, iface.address);
 	  				    // return iface.address;
 	  				    this.myAddress = iface.address;
+	  				    resolve(iface.address);
 	  				}
 	  				++alias;
 	  			});
-		});
+			});
+		})
 	}
 
 	responseHandler(data){
@@ -155,7 +166,6 @@ class ConnectionBroker{
 	broadcastMyIp(){
 		//var ip = this.getMyPublicAddress();
 
-		var address = ip + ':' + PC_PORT;
 		var node = new NodeModel({'ip': this.myAddress, 'port' : PORT_NUMBER});
 		var packet = new PacketModel({'packetType': "P", 'action' : "RegisterNode", 'data': node});
 		return packet;
@@ -165,7 +175,7 @@ class ConnectionBroker{
 	registerNode(data){
 		console.log("Registering Node");
 		var data = new NodeModel(data);
-		if (data.ip != "" && data.port != "") {
+		if (data.ip && data.port) {
 			this.db.put(Date.now(), data, (err) =>{
 				if (err) logger.log("error", err, "Error while registering Node");
 				else logger.log("success", JSON.stringify(data), "Successfully registered node");

@@ -1,6 +1,6 @@
 var crypto = require('crypto');
 var Signup = require('@models/Signup');
-var db = require('@src/db');
+var Crypt = require('@common/Crypt');
 
 // var level = require('level');
 // var logger = require('./../logger');
@@ -11,21 +11,33 @@ var db = require('@src/db');
 
 
 class SignupHandler {
-    constructor(username, pwd, EVENT) {
+    constructor(username, pwd, inputkey, EVENT) {
 
-        var ecdh = crypto.createECDH("secp256k1");
-        ecdh.generateKeys();
-        var publicKey = ecdh.getPublicKey().toString('base64');
-        var privateKey = ecdh.getPublicKey().toString('base64');
+        var db = require('@src/db');
+        
+
+        // var ecdh = crypto.createECDH("secp256k1");
+        // ecdh.generateKeys();
+        // var publicKey = ecdh.getPublicKey().toString('base64');
+        // var privateKey = ecdh.getPublicKey().toString('base64');
         var approvedBalance = 0;
         var unapprovedBalance = 0;
         username = username || '';
         pwd = pwd || '';
+        inputkey = inputkey || ''
+
+        var keys = {};
+        if (inputkey) {
+            keys.privateKey = inputkey;
+            keys.publicKey = new Crypt().GetPublicKey(keys.privateKey);
+        }else{
+            var keys = new Crypt().CreateKeyPair();
+        }
         
         var md5sum = crypto.createHash('md5');
         md5sum.update(pwd);
         pwd = md5sum.digest('base64');
-        var signupModel = new Signup(publicKey, privateKey, unapprovedBalance, approvedBalance, username, pwd);
+        var signupModel = new Signup(keys.publicKey, keys.privateKey, unapprovedBalance, approvedBalance, username, pwd);
         
         console.log(signupModel);
         db.get(signupModel.username, (err, data) =>{
@@ -39,6 +51,7 @@ class SignupHandler {
 
                 }
                 db.put(signupModel.username, signupModel, (err) => {
+                    db.colse();
                     if (err) {
                         EVENT.sender.send('signup-response', JSON.stringify({
                             success: false,
@@ -50,7 +63,7 @@ class SignupHandler {
                         success: true,
                         msg: 'account successfully created',
                         data: {
-                            privateKey: privateKey
+                            privateKey: keys.privateKey
                         }
                     }));
                     return;

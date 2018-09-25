@@ -7,17 +7,17 @@ const logger = require('@root/logger.js');
 // const UTXOHandler = require("@src/UTXOHandler.js")
 
 const level = require("level");
-const db = level("@data/chain", {valueEncoding : "json"}, (err) => {
-    if(err) {
-        logger.log("error", err, "Error while opening chain db");
-    }
-});
+// const db = level("./data/chain", {valueEncoding : "json"}, (err) => {
+//     if(err) {
+//         logger.log("error", err, "Error while opening chain db");
+//     }
+// });
 
 
 class ChainHandler {
 
 	constructor(){
-		this.db = level("@data/chain", {valueEncoding : "json"}, (err) => {
+		this.db = level("./data/chain", {valueEncoding : "json"}, (err) => {
             if(err) {
                 logger.log("error", err, "Error while opening chain db");
             }
@@ -34,7 +34,7 @@ class ChainHandler {
     }
 
     // PublishToNetwork(block){
-        
+
     // }
     
     CreateGenesisBlock(block){

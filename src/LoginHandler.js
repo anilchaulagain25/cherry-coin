@@ -1,5 +1,4 @@
 var crypto = require('crypto');
-var dbUsers = require('@src/db');
 const ConnectionBroker = require('@connection/ConnectionBroker');
 
 // var level = require('level');
@@ -11,6 +10,7 @@ const ConnectionBroker = require('@connection/ConnectionBroker');
 class LoginHandler {
     constructor(username, pwd, EVENT) {
 
+        var dbUsers = require('@src/db');
         username = username || '';
         pwd = pwd || '';
 
@@ -19,6 +19,7 @@ class LoginHandler {
         pwd = md5sum.digest('base64');
 
         dbUsers.get(username, (err, data) => {
+            dbUsers.close();
             if (err) {
                 if (err.type === "ReadError") {
                     EVENT.sender.send('login-response', JSON.stringify({

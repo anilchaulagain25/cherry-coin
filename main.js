@@ -10,6 +10,7 @@ global.APP_NAME = "Cherry-Coin";
 const SignupHandler = require('./src/SignupHandler');
 const {LoginHandler} = require('./src/LoginHandler');
 const BlockResponder = require('./src/BlockResponder');
+const Responder = require('./src/renderer/responder');
 
 
 
@@ -56,7 +57,7 @@ function createWindow() {
   ipcMain.on('signup-request', (event, arg) => {
 
     var obj = JSON.parse(arg);
-    new SignupHandler(obj.username, obj.pwd, event);
+    new SignupHandler(obj.username, obj.pwd,obj.inputkey, event);
 
   });
   //LOGIN ACTION
@@ -73,6 +74,27 @@ function createWindow() {
     BlockResponder.MineBlock(event, arg);
   });
 
+  //USER 
+  ipcMain.on('GetUserParameters', (event, arg) =>{
+    console.log("MAIN.js bootstrapper");
+    Responder.GetUserParameters(event,arg);
+  });
+  //UnConfirmed Balance
+  ipcMain.on('GetCurrentBalance', (event, arg) =>{
+    console.log("MAIN.js bootstrapper");
+    Responder.GetCurrentBalance(event,arg);
+  });
+  //Confirmed
+  ipcMain.on('GetBalance', (event, arg) =>{
+    console.log("MAIN.js bootstrapper");
+    Responder.GotBalance(event,arg);
+  });
+
+  //Global Values
+  ipcMain.on('GetGlobalValues', (event, arg) =>{
+    console.log("MAIN.js bootstrapper");
+    Responder.GetGlobalValues(event,arg);
+  });
   
 }
 

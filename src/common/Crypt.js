@@ -22,7 +22,7 @@ class Crypt{
 
 
     //Generate Signature taking in hash and private Key
-    GenerateSignature(hash, privKey){
+    GenerateSignature(hash, privateKey){
         let hashBuffer = Buffer.from(hash, 'base64');
         let privateKeyBuffer = Buffer.from(privateKey, 'base64');
         var res = secp256k1.sign(hashBuffer, privateKeyBuffer);
@@ -62,8 +62,9 @@ class Crypt{
 
     //Generate Public Key from its corresponding Private Key
     GetPublicKey(privKey){
+        let privateKey = Buffer.from(privKey, 'base64');
         const ecdh = crypto.createECDH("secp256k1");
-        ecdh.setPrivateKey(privKey, 'base64');
+        ecdh.setPrivateKey(privateKey, 'base64');
         var pubKey = ecdh.getPublicKey('base64');
 
         return pubKey;

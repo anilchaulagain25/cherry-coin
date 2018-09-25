@@ -2,6 +2,7 @@ const logger = require('@root/logger.js');
 const level = require("level");
 const Crypt = require('@common/Crypt');
 
+
 class User{
 	constructor(){
 		this.db = level('./data/wallet/user', (err) =>{
@@ -20,7 +21,7 @@ class User{
 	}
 
 	getValue(key){
-		return new Promise((resolve, request) => {
+		return new Promise((resolve, reject) => {
 			if(this.db.isClosed()) this.db.open();
 			this.db.get(key, (err, data) =>{
 				if (err) {
@@ -36,8 +37,32 @@ class User{
 		})
 	}
 
+	getAllValues(){
+		return new Promise((resolve, reject)=>{
+  			console.log("Starting Promise");
+			var list = [];
+			if(this.db.isClosed()) this.db.open();
+			let stream = this.db.createReadStream();
+  			console.log("Starting stream");
+			stream.on('data', (data)=>{
+  			console.log(data);
+				list.push(data);
+			});
+			stream.on('end', (data)=>{
+  			console.log(list);
+				this.db.close();
+				resolve(list);
+			});
+			stream.on('error', (data)=>{
+				logger.log("error", err, "User getAllValues")
+				this.db.close();
+				reject(data);
+			});
+		})
+	}
+
 	getPrivateKey(){
-		return new Promise((resolve, request) => {
+		return new Promise((resolve, reject) => {
 			if(this.db.isClosed()) this.db.open();
 			this.db.get("privateKey", (err, data) =>{
 				if (err) {
@@ -54,7 +79,7 @@ class User{
 	};
 
 	getPublicKey(){
-		return new Promise((resolve, request) => {
+		return new Promise((resolve, reject) => {
 			if(this.db.isClosed()) this.db.open();
 			this.db.get("publicKey", (err, data) =>{
 				if (err) {
@@ -71,7 +96,7 @@ class User{
 	};
 
 	getUsername(){
-		return new Promise((resolve, request) => {
+		return new Promise((resolve, reject) => {
 			if(this.db.isClosed()) this.db.open();
 			this.db.get("username", (err, data) =>{
 				if (err) {
@@ -88,7 +113,7 @@ class User{
 	};
 
 	getBalance(){
-		return new Promise((resolve, request) => {
+		return new Promise((resolve, reject) => {
 			if(this.db.isClosed()) this.db.open();
 			this.db.get("balance", (err, data) =>{
 				if (err) {
@@ -109,7 +134,7 @@ class User{
 	};
 
 	getUcBalance(){
-		return new Promise((resolve, request) => {
+		return new Promise((resolve, reject) => {
 			if(this.db.isClosed()) this.db.open();
 			this.db.get("ucBalance", (err, data) =>{
 				if (err) {
@@ -182,5 +207,12 @@ class User{
 		});
 	}
 
+	//TO BE USED DURING WALLET SIGNUP OF EXISTING USER AFTER SETTING THE KEY PARAMETERS
+	populateUtxoBalance(){
+
+	}
+
 
 }
+
+module.exports = User

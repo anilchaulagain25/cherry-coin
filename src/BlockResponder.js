@@ -18,4 +18,4 @@ var MineBlock = (event, arg) => {
 }
 
 
-module.exports = {GenerateBlock}
+module.exports = {GenerateBlock, MineBlock}

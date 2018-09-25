@@ -20,7 +20,7 @@ class dbGlobal{
 	}
 
 	getValue(key){
-		return new Promise((resolve, request) => {
+		return new Promise((resolve, reject) => {
 			if(this.db.isClosed()) this.db.open();
 			this.db.get(key, (err, data) =>{
 				if (err) {
@@ -36,11 +36,35 @@ class dbGlobal{
 		})
 	}
 
+	getAllValues(){
+		return new Promise((resolve, reject)=>{
+  			console.log("Starting Promise");
+			var list = [];
+			if(this.db.isClosed()) this.db.open();
+			let stream = this.db.createReadStream();
+  			console.log("Starting stream");
+			stream.on('data', (data)=>{
+  			console.log(data);
+				list.push(data);
+			});
+			stream.on('end', (data)=>{
+				this.db.close();
+  			console.log(list);
+				resolve(list);
+			});
+			stream.on('error', (data)=>{
+				logger.log("error", err, "Global getAllValues")
+				this.db.close();
+				reject(data);
+			});
+		})
+	}
+
 /*=========== GETTERS ======================== */
 
 
 	getCoinbaseAmount(){
-		return new Promise((resolve, request) => {
+		return new Promise((resolve, reject) => {
 			if(this.db.isClosed()) this.db.open();
 			this.db.get("coinbase", (err, data) =>{
 				if (err) {
@@ -61,7 +85,7 @@ class dbGlobal{
 	};
 
 	getBlockIndex(){
-		return new Promise((resolve, request) => {
+		return new Promise((resolve, reject) => {
 			if(this.db.isClosed()) this.db.open();
 			this.db.get("blockIndex", (err, data) =>{
 				if (err) {
@@ -82,7 +106,7 @@ class dbGlobal{
 	}
 
 	getLatestBlockHash(){
-		return new Promise((resolve, request) => {
+		return new Promise((resolve, reject) => {
 			if(this.db.isClosed()) this.db.open();
 			this.db.get("blockHash", (err, data) =>{
 				if (err) {
@@ -103,16 +127,37 @@ class dbGlobal{
 	}
 
 	getBlockDifficulty(){
-		return new Promise((resolve, request) => {
+		return new Promise((resolve, reject) => {
 			if(this.db.isClosed()) this.db.open();
 			this.db.get("blockDifficulty", (err, data) =>{
 				if (err) {
 					this.db.close();
 					if (err.type === "NotFoundError") {
 						this.setblockDifficulty(5);
-						return this.getLatestBlockHash();
+						return this.getBlockDifficulty();
 					}
 					logger.log("error", err, "Globaldb >> getBlockDifficulty")
+					reject(0);
+				}
+				else {
+					this.db.close();
+					resolve(data);
+				}
+			});
+		})
+	}
+
+	getTransactionFee(){
+		return new Promise((resolve, reject) => {
+			if(this.db.isClosed()) this.db.open();
+			this.db.get("transactionFee", (err, data) =>{
+				if (err) {
+					this.db.close();
+					if (err.type === "NotFoundError") {
+						this.setTransactionFee(0);
+						return this.getTransactionFee();
+					}
+					logger.log("error", err, "Globaldb >> getTransactionFee")
 					reject(0);
 				}
 				else {
@@ -163,6 +208,16 @@ class dbGlobal{
 		this.db.put("blockDifficulty", value, (err)=>{
 			if (err) {
 				logger.log("error", err, "Globaldb  getBlockDifficulty error");
+			}
+			this.db.close();
+		});
+	}
+
+	setTransactionFee(value){
+		if(this.db.isClosed()) this.db.open();
+		this.db.put("transactionFee", value, (err)=>{
+			if (err) {
+				logger.log("error", err, "Globaldb  setTransactionFee error");
 			}
 			this.db.close();
 		});

@@ -2,7 +2,7 @@ const logger = require('@root/logger.js');
 const level = require('level');
 const Crypt = require('@common/Crypt');
 
-const dbGlobal = require('@common/Global');
+const DbGlobal = require('@common/Global');
 const User = require('@common/User');
 
 const BlockModel = require("@models/Block")
@@ -16,35 +16,11 @@ const ChainUtxoHandler = require('@src/ChainUtxoHandler');
 // const UTXOHandler = require("@src/UTXOHandler.js")
 
 
-// var index = {
-// 	idb : level('./data/global/', (err) =>{
-// 		if (err) {logger.log("error", err, false)}
-// 	}),
-// 	setValue : function (key, value) {
-// 		index.idb.put(key, value, (err)=>{
-// 			if (err) {
-// 				logger.log("error", err, false, "blockHandler", "leveldb : global");
-// 			}
-// 		});
-// 	},
-// 	getValue : function (key) {
-// 		return new Promise((resolve, request) => {
-// 			index.idb.get(key, (err, data) =>{
-// 				if (err) {
-// 					logger.log("error", err,supress = false, "blockHandler", "leveldb : global")
-// 					reject(0);
-// 				}
-// 				else resolve(data);
-// 			});
-// 		})
-// 	}
-// }
-
 
 class BlockHandler {
 
 	constructor(blk){
-		this.block = new Block(blk);
+		this.block = new BlockModel(blk);
 		this.mypubkey = ""; //todo xx
 		this.db = level('./data/block/', {'valueEncoding': 'json'}, (err) =>{
 			if (err) {logger.log("error", err, false)}
@@ -78,6 +54,7 @@ class BlockHandler {
 
 	//New Block Generator
 	GenerateNewBlock(){
+		var dbGlobal = new DbGlobal();
 		var response = new Response();
 		dbGlobal.getBlockIndex().then((blockIndex)=>{
 			if (blockIndex === 0) {
@@ -167,6 +144,7 @@ class BlockHandler {
 
 	//Mine Block Hash
 	MineBlock(){
+		var dbGlobal = new DbGlobal();
 		new dbGlobal().getBlockDifficulty().then((data)=>{
 			var crypt = new Crypt();
 			var minedHash = "";
@@ -196,6 +174,7 @@ class BlockHandler {
 
 	//Validate and Manage Input Block
 	ProcessInputBlock(block){
+		var dbGlobal = new DbGlobal();
 		this.block = block;
 		var response = new Response();
 		Promise.all([
@@ -220,8 +199,8 @@ class BlockHandler {
 						response.msg = "Warning ! - Invalid Hash...!!!";
 						return response;
 					}
-					var utxo = new ChainUtxoHandler();
-					utxo.AssignUtxo(true,true);
+					var utxo = new ChainUtxoHandler(true,true);
+					// utxo.AssignUtxo(true,true);
 					utxo.ReplicateUtxoPool().then(()=>{
 						for (let txn of this.block.transactions){
 							utxo.CheckUtxo(txn.sender, txn.amount).then((data, error)=>{

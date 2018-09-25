@@ -1,6 +1,6 @@
 const logger = require('@root/logger.js');
 const level = require("level");
-const crypt = require('@common/Crypt');
+const Crypt = require('@common/Crypt');
 const Globaldb = require('@common/Global'); 
 const UTXOhandler = require('./UTXOhandler');
 const {TransactionModel, TransactionHashModel} = require('@models/Transaction');
@@ -40,6 +40,7 @@ class TransactionHandler{
 
 
     ValidateTransaction(tx){
+        let crypt = new Crypt();
         var response = new Response;
         var htx = new TransactionHashModel(tx);
         let isValid = crypt.ValidateSignature(htx, tx.sender, tx.signature);
@@ -182,6 +183,7 @@ class TransactionHandler{
 
     // PROCESS PEER TRANSACTIONS AND SAVE TO DATABASE
     ProcessPeerTxn(txn){
+        let crypt = new Crypt();
         var response = new Response();
         if (!txn.receiver || !txn.sender) {
             response.msg = "Invalid Receiver/Sender Address";

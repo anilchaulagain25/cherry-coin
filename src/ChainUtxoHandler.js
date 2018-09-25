@@ -1,38 +1,45 @@
 const logger = require('@root/logger.js');
 const level = require('level');
 const rimraf = require('rimraf');
+const {Response} = require('@models/Common');
 
 class ChainUtxoHandler{
-	constructor(){
-		this.sdb = "";
-		this.ddb = "";
-	}
-
-	ChainPool(){
-		return level("./../data/utxoPool", {valueEncoding : "json"}, (err) => {
-			if(err) {
-				logger.log("error", err, "Error while opening chain utxoPool");
-			};
-		});
-	}
-
-	WalletPool(){
-		return level("./../data/wallet/utxoPool", {valueEncoding : "json"}, (err) => {
-			if(err) {
-				logger.log("error", err, "Error while opening wallet utxoPool");
-			};
-		});	
-	}
-
-	AssignUtxo(chainPool, walletPool){
+	constructor(chainPool, walletPool){
+		// this.sdb = "";
+		// this.ddb = "";
 		if (chainPool) {
-			this.sdb = this.ChainPool();
+			this.sdb = level("./../data/utxoPool", {valueEncoding : "json"}, (err) => {
+				if(err) {
+					logger.log("error", err, "Error while opening chain utxoPool");
+				};
+			});
 		}
 		if (walletPool) {
-			this.ddb = this.WalletPool();
+			this.ddb = tlevel("./../data/wallet/utxoPool", {valueEncoding : "json"}, (err) => {
+				if(err) {
+					logger.log("error", err, "Error while opening wallet utxoPool");
+				};
+			});	
 		}
 	}
 
+/*	AssignUtxo(chainPool, walletPool){
+		if (chainPool) {
+			this.sdb = level("./../data/utxoPool", {valueEncoding : "json"}, (err) => {
+				if(err) {
+					logger.log("error", err, "Error while opening chain utxoPool");
+				};
+			});
+		}
+		if (walletPool) {
+			this.ddb = tlevel("./../data/wallet/utxoPool", {valueEncoding : "json"}, (err) => {
+				if(err) {
+					logger.log("error", err, "Error while opening wallet utxoPool");
+				};
+			});	
+		}
+	}
+*/
 
 	CleanUtxo(){
 		rimraf('./../data/wallet/utxoPool', (data)=>{
@@ -71,6 +78,8 @@ class ChainUtxoHandler{
 		})
 	}
 
+
+	//TO BE USED DURING VALIDATING RECEIVED BLOCKS
 	CheckUtxo(key, amount){
 		return new Promise((resolve, reject)=>{
 			if (this.ddb.isClosed()) {this.ddb.open();}
@@ -95,8 +104,19 @@ class ChainUtxoHandler{
 		});
 	}
 
+	//TO BE USED TO UPDATE ROOT UTXO POOL AFTER BLOCK VALILDATION
 	UpdateChainUtxo(){
 
+	}
+
+	//GET UTXO OF SINGLE ADDRESS
+	GetLatestUtxo(address){
+		this.sdb.get(address).then((data)=>{
+			return new Response({success: true, data: data});
+		}).catch((error)=>{
+			logger.log(error.type, error, "Error while getting Utxo ChainUtxoHandler -> GetLatestUtxo" )
+			return new Response({success: true, msg: error});
+		});
 	}
 
 
